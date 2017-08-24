@@ -9,6 +9,11 @@
         <version>9</version>
     </parent>
 
+    <groupId>com.wirktop</groupId>
+    <artifactId>esutils</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
     <name>ElasticSearch Java Utilities</name>
     <description>
         esutils is a Java library that adds some fluency to the interaction with ElasticSeach in a Java environment. Please check the Features section for the
@@ -38,10 +43,16 @@
         <url>https://github.com/cosmin-marginean/esutils</url>
     </scm>
 
-    <groupId>com.wirktop</groupId>
-    <artifactId>esutils</artifactId>
-    <version>0.1.0</version>
-    <packaging>jar</packaging>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <elasticsearch.version>5.5.2</elasticsearch.version>
