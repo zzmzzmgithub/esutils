@@ -93,6 +93,13 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
+#### Indices
+```
+ElasticSearchClient client = new ElasticSearchClient(...);
+Admin admin = client.admin();
+boolean x = admin.indexExists(index);
+admin.createIndex(index, numberOfShards);
+```
 #### Templates
 ```
 ElasticSearchClient client = new ElasticSearchClient(..);
