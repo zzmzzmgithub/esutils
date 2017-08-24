@@ -30,7 +30,7 @@ public abstract class TestBase {
     private static final String CLUSTER = "wirktop-esutils-test";
 
     private static TransportClient client;
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    protected static ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeClass
     public static void bootstrap() throws Exception {
@@ -97,7 +97,7 @@ public abstract class TestBase {
         assertSame(new JSONObject(pojoToString(map1)), new JSONObject(pojoToString(map2)));
     }
 
-    private static String pojoToString(Object pojo) throws IOException {
+    public static String pojoToString(Object pojo) throws IOException {
         StringWriter writer = new StringWriter();
         objectMapper.writer().writeValue(writer, pojo);
         return writer.toString();

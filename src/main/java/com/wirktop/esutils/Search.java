@@ -161,10 +161,6 @@ public class Search {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
-    public SearchRequestBuilder searchRequestNoType() {
-        return client.prepareSearch(index());
-    }
-
     public String index() {
         return index;
     }

@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +22,16 @@ public class SearchTest extends TestBase {
     public void testInvalidNodes() throws Exception {
         Search.transportBuilder()
                 .nodes(Arrays.asList("aaaa2229300"))
+                .index("i1")
+                .type("t1")
+                .clusterName("x")
+                .build();
+    }
+
+    @Test(expected = SearchException.class)
+    public void testInvalidHost() throws Exception {
+        Search.transportBuilder()
+                .node("blowup:9300")
                 .index("i1")
                 .type("t1")
                 .clusterName("x")
@@ -93,7 +104,7 @@ public class SearchTest extends TestBase {
         JSONObject document = randomDoc();
         String id = search.indexer().index(docAsPojo("pojo1.json", TestPojo.class));
         TestPojo pojo = search.get(id, TestPojo.class);
-        assertSame(new JSONObject(pojo), document);
+        assertSame(new JSONObject(pojoToString(pojo)), document);
     }
 
     @Test
@@ -109,5 +120,14 @@ public class SearchTest extends TestBase {
         List<SearchHit> docs = search.scroll(QueryBuilders.matchAllQuery())
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
+    }
+
+    @Test
+    public void testMissingDoc() throws Exception {
+        Search search = search("test-missing-doc", "type1");
+        Assert.assertNull(search.get("askjdkjbadfasdf", TestPojo.class));
+        Assert.assertNull(search.getStr("askjdkjbadfas12312093df"));
+        Assert.assertNull(search.getJson(UUID.randomUUID().toString()));
+        Assert.assertNull(search.getMap(UUID.randomUUID().toString()));
     }
 }
