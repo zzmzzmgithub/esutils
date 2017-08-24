@@ -9,7 +9,11 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +23,8 @@ import java.util.stream.Collectors;
  * @author Cosmin Marginean
  */
 public class Indexer {
+
+    private static final Logger log = LoggerFactory.getLogger(Indexer.class);
 
     public static final int DEFAULT_BATCH_SIZE = 100;
 
@@ -30,6 +36,25 @@ public class Indexer {
 
     public String index(String id, Map<String, Object> document) {
         return index(id, document, false);
+    }
+
+    public String index(Object pojo) {
+        return index(null, pojo, false);
+    }
+
+    public String index(String id, Object pojo) {
+        return index(id, pojo, false);
+    }
+
+    public String index(String id, Object pojo, boolean refresh) {
+        try {
+            StringWriter writer = new StringWriter();
+            search.getObjectMapper().writer().writeValue(writer, pojo);
+            return index(id, writer.toString(), refresh);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new SearchException(e.getMessage(), e);
+        }
     }
 
     public String index(Map<String, Object> document) {

@@ -21,6 +21,48 @@ import java.util.stream.Collectors;
 public class IndexerTest extends TestBase {
 
     @Test
+    public void testIndexPojo() throws Exception {
+        Search search = search("index1", "type1");
+        Indexer indexer = search.indexer();
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String newId = indexer.index(document);
+        System.out.println("Got ID: " + newId);
+        assertSamePojo1(search, document, newId);
+    }
+
+    @Test
+    public void testIndexPojoId() throws Exception {
+        Search search = search("index1", "type1");
+        Indexer indexer = search.indexer();
+        String myId = UUID.randomUUID().toString();
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String newId = indexer.index(myId, document);
+        System.out.println("Got ID: " + newId);
+        Assert.assertEquals(myId, newId);
+        assertSamePojo1(search, document, newId);
+    }
+
+    @Test
+    public void testIndexPojoIdRefresh() throws Exception {
+        Search search = search("index1", "type1");
+        Indexer indexer = search.indexer();
+        String myId = UUID.randomUUID().toString();
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String newId = indexer.index(myId, document, true);
+        System.out.println("Got ID: " + newId);
+        Assert.assertEquals(myId, newId);
+        assertSamePojo1(search, document, newId);
+    }
+
+    private void assertSamePojo1(Search search, TestPojo document, String newId) {
+        TestPojo stored = search.get(newId, TestPojo.class);
+        Assert.assertEquals(stored, document);
+        Assert.assertEquals(stored.getId(), "one");
+        Assert.assertEquals(stored.getName(), "John Smith");
+        Assert.assertEquals(stored.getAge(), 92);
+    }
+
+    @Test
     public void testIndexSimpleMap() throws Exception {
         Indexer indexer = search("index1", "type1").indexer();
         Map<String, Object> document = docAsMap("sample-doc-1.json");

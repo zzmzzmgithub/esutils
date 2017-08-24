@@ -76,6 +76,11 @@ public abstract class TestBase {
         return objectMapper.readValue(str, Map.class);
     }
 
+    public <T> T docAsPojo(String docName, Class<T> pojoClass) throws IOException {
+        String str = IOUtils.toString(getClass().getResourceAsStream("/docs/" + docName), StandardCharsets.UTF_8);
+        return objectMapper.readValue(str, pojoClass);
+    }
+
     public void assertSame(JSONObject json1, JSONObject json2) {
         System.out.println("Comparing: " + json1.toString());
         System.out.println("     With: " + json2.toString());

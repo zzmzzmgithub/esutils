@@ -9,7 +9,11 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,134 +24,155 @@ import java.util.stream.Collectors;
  */
 public class Indexer {
 
+<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(Indexer.class);</span>
+
     public static final int DEFAULT_BATCH_SIZE = 100;
 
     private Search search;
 
-<span class="fc" id="L27">    public Indexer(Search search) {</span>
-<span class="fc" id="L28">        this.search = search;</span>
-<span class="fc" id="L29">    }</span>
+<span class="fc" id="L33">    public Indexer(Search search) {</span>
+<span class="fc" id="L34">        this.search = search;</span>
+<span class="fc" id="L35">    }</span>
 
     public String index(String id, Map&lt;String, Object&gt; document) {
-<span class="fc" id="L32">        return index(id, document, false);</span>
+<span class="fc" id="L38">        return index(id, document, false);</span>
+    }
+
+    public String index(Object pojo) {
+<span class="fc" id="L42">        return index(null, pojo, false);</span>
+    }
+
+    public String index(String id, Object pojo) {
+<span class="fc" id="L46">        return index(id, pojo, false);</span>
+    }
+
+    public String index(String id, Object pojo, boolean refresh) {
+        try {
+<span class="fc" id="L51">            StringWriter writer = new StringWriter();</span>
+<span class="fc" id="L52">            search.getObjectMapper().writer().writeValue(writer, pojo);</span>
+<span class="fc" id="L53">            return index(id, writer.toString(), refresh);</span>
+<span class="nc" id="L54">        } catch (IOException e) {</span>
+<span class="nc" id="L55">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L56">            throw new SearchException(e.getMessage(), e);</span>
+        }
     }
 
     public String index(Map&lt;String, Object&gt; document) {
-<span class="fc" id="L36">        return index(null, document, false);</span>
+<span class="fc" id="L61">        return index(null, document, false);</span>
     }
 
     public String index(String id, Map&lt;String, Object&gt; document, boolean waitRefresh) {
-<span class="fc" id="L40">        IndexRequestBuilder request = indexRequest(id, waitRefresh);</span>
-<span class="fc" id="L41">        request = request.setSource(document);</span>
-<span class="fc" id="L42">        IndexResponse response = request.execute().actionGet();</span>
-<span class="fc" id="L43">        return response.getId();</span>
+<span class="fc" id="L65">        IndexRequestBuilder request = indexRequest(id, waitRefresh);</span>
+<span class="fc" id="L66">        request = request.setSource(document);</span>
+<span class="fc" id="L67">        IndexResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L68">        return response.getId();</span>
     }
 
     public String index(JSONObject document) {
-<span class="fc" id="L47">        return index(null, document, false);</span>
+<span class="fc" id="L72">        return index(null, document, false);</span>
     }
 
     public String index(String id, JSONObject document) {
-<span class="fc" id="L51">        return index(id, document, false);</span>
+<span class="fc" id="L76">        return index(id, document, false);</span>
     }
 
     public String index(String id, JSONObject document, boolean waitRefresh) {
-<span class="fc" id="L55">        return index(id, document.toString(), waitRefresh);</span>
+<span class="fc" id="L80">        return index(id, document.toString(), waitRefresh);</span>
     }
 
     public String index(String source) {
-<span class="fc" id="L59">        return index(null, source, false);</span>
+<span class="fc" id="L84">        return index(null, source, false);</span>
     }
 
     public String index(String id, String source) {
-<span class="fc" id="L63">        return index(id, source, false);</span>
+<span class="fc" id="L88">        return index(id, source, false);</span>
     }
 
     public String index(String id, String source, boolean waitRefresh) {
-<span class="fc" id="L67">        IndexRequestBuilder request = indexRequest(id, waitRefresh);</span>
-<span class="fc" id="L68">        request = request.setSource(source, XContentType.JSON);</span>
-<span class="fc" id="L69">        IndexResponse response = request.execute().actionGet();</span>
-<span class="fc" id="L70">        return response.getId();</span>
+<span class="fc" id="L92">        IndexRequestBuilder request = indexRequest(id, waitRefresh);</span>
+<span class="fc" id="L93">        request = request.setSource(source, XContentType.JSON);</span>
+<span class="fc" id="L94">        IndexResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L95">        return response.getId();</span>
     }
 
     private IndexRequestBuilder indexRequest(String id, boolean waitRefresh) {
-<span class="fc" id="L74">        IndexRequestBuilder request = prepareIndex();</span>
-<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (id != null) {</span>
-<span class="fc" id="L76">            request = request.setId(id);</span>
+<span class="fc" id="L99">        IndexRequestBuilder request = prepareIndex();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (id != null) {</span>
+<span class="fc" id="L101">            request = request.setId(id);</span>
         }
-<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (waitRefresh) {</span>
-<span class="fc" id="L79">            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (waitRefresh) {</span>
+<span class="fc" id="L104">            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
         }
-<span class="fc" id="L81">        return request;</span>
+<span class="fc" id="L106">        return request;</span>
     }
 
     public void bulkIndexJson(Collection&lt;JSONObject&gt; documents) {
-<span class="fc" id="L85">        bulkIndexJson(documents, null);</span>
-<span class="fc" id="L86">    }</span>
+<span class="fc" id="L110">        bulkIndexJson(documents, null);</span>
+<span class="fc" id="L111">    }</span>
 
     public void bulkIndexJson(Collection&lt;JSONObject&gt; documents, String idField) {
-<span class="fc" id="L89">        List&lt;Map&lt;String, Object&gt;&gt; mapDocs = documents.stream()</span>
-<span class="fc" id="L90">                .map((json) -&gt; json.toMap())</span>
-<span class="fc" id="L91">                .collect(Collectors.toList());</span>
-<span class="fc" id="L92">        bulkIndex(mapDocs, idField);</span>
-<span class="fc" id="L93">    }</span>
+<span class="fc" id="L114">        List&lt;Map&lt;String, Object&gt;&gt; mapDocs = documents.stream()</span>
+<span class="fc" id="L115">                .map((json) -&gt; json.toMap())</span>
+<span class="fc" id="L116">                .collect(Collectors.toList());</span>
+<span class="fc" id="L117">        bulkIndex(mapDocs, idField);</span>
+<span class="fc" id="L118">    }</span>
 
     public void bulkIndex(Collection&lt;Map&lt;String, Object&gt;&gt; documents) {
-<span class="fc" id="L96">        bulkIndex(documents, null);</span>
-<span class="fc" id="L97">    }</span>
+<span class="fc" id="L121">        bulkIndex(documents, null);</span>
+<span class="fc" id="L122">    }</span>
 
     public void bulkIndex(Collection&lt;Map&lt;String, Object&gt;&gt; documents, String idField) {
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (documents != null) {</span>
-<span class="fc" id="L101">            BulkRequestBuilder request = search.client().prepareBulk();</span>
-<span class="fc bfc" id="L102" title="All 2 branches covered.">            for (Map&lt;String, Object&gt; document : documents) {</span>
-<span class="fc" id="L103">                IndexRequestBuilder indexRequest = prepareIndex();</span>
-<span class="pc bpc" id="L104" title="2 of 6 branches missed.">                if (idField != null &amp;&amp; document.containsKey(idField) &amp;&amp; document.get(idField) instanceof String) {</span>
-<span class="fc" id="L105">                    indexRequest.setId((String) document.get(idField));</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L126">            BulkRequestBuilder request = search.client().prepareBulk();</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">            for (Map&lt;String, Object&gt; document : documents) {</span>
+<span class="fc" id="L128">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="pc bpc" id="L129" title="2 of 6 branches missed.">                if (idField != null &amp;&amp; document.containsKey(idField) &amp;&amp; document.get(idField) instanceof String) {</span>
+<span class="fc" id="L130">                    indexRequest.setId((String) document.get(idField));</span>
                 }
-<span class="fc" id="L107">                indexRequest = indexRequest.setSource(document);</span>
-<span class="fc" id="L108">                request.add(indexRequest);</span>
-<span class="fc" id="L109">            }</span>
-<span class="fc" id="L110">            doBulkIndex(request);</span>
+<span class="fc" id="L132">                indexRequest = indexRequest.setSource(document);</span>
+<span class="fc" id="L133">                request.add(indexRequest);</span>
+<span class="fc" id="L134">            }</span>
+<span class="fc" id="L135">            doBulkIndex(request);</span>
         }
-<span class="fc" id="L112">    }</span>
+<span class="fc" id="L137">    }</span>
 
     public void bulkIndexJsonStr(Collection&lt;String&gt; documents) {
-<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (documents != null) {</span>
-<span class="fc" id="L116">            BulkRequestBuilder request = search.client().prepareBulk();</span>
-<span class="fc bfc" id="L117" title="All 2 branches covered.">            for (String document : documents) {</span>
-<span class="fc" id="L118">                IndexRequestBuilder indexRequest = prepareIndex();</span>
-<span class="fc" id="L119">                indexRequest = indexRequest.setSource(document, XContentType.JSON);</span>
-<span class="fc" id="L120">                request.add(indexRequest);</span>
-<span class="fc" id="L121">            }</span>
-<span class="fc" id="L122">            doBulkIndex(request);</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L141">            BulkRequestBuilder request = search.client().prepareBulk();</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">            for (String document : documents) {</span>
+<span class="fc" id="L143">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="fc" id="L144">                indexRequest = indexRequest.setSource(document, XContentType.JSON);</span>
+<span class="fc" id="L145">                request.add(indexRequest);</span>
+<span class="fc" id="L146">            }</span>
+<span class="fc" id="L147">            doBulkIndex(request);</span>
         }
-<span class="fc" id="L124">    }</span>
+<span class="fc" id="L149">    }</span>
 
     public IndexBatch batch() {
-<span class="fc" id="L127">        return new IndexBatch(this, DEFAULT_BATCH_SIZE, null);</span>
+<span class="fc" id="L152">        return new IndexBatch(this, DEFAULT_BATCH_SIZE, null);</span>
     }
 
     public IndexBatch batch(int size) {
-<span class="fc" id="L131">        return new IndexBatch(this, size, null);</span>
+<span class="fc" id="L156">        return new IndexBatch(this, size, null);</span>
     }
 
     public IndexBatch batch(int size, String idField) {
-<span class="fc" id="L135">        return new IndexBatch(this, size, idField);</span>
+<span class="fc" id="L160">        return new IndexBatch(this, size, idField);</span>
     }
 
     private void doBulkIndex(BulkRequestBuilder request) {
-<span class="fc" id="L139">        BulkResponse response = request.execute().actionGet();</span>
-<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (response.hasFailures()) {</span>
-<span class="fc" id="L141">            throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
+<span class="fc" id="L164">        BulkResponse response = request.execute().actionGet();</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (response.hasFailures()) {</span>
+<span class="fc" id="L166">            throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
         }
-<span class="fc" id="L143">    }</span>
+<span class="fc" id="L168">    }</span>
 
     private IndexRequestBuilder prepareIndex() {
-<span class="fc" id="L146">        return search.client().prepareIndex(search.index(), search.type());</span>
+<span class="fc" id="L171">        return search.client().prepareIndex(search.index(), search.type());</span>
     }
 
     public Search search() {
-<span class="fc" id="L150">        return search;</span>
+<span class="fc" id="L175">        return search;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

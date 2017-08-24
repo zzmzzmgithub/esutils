@@ -94,34 +94,34 @@ public class Search {
 <span class="fc" id="L94">    }</span>
 
     public JSONObject getJson(String id) {
-<span class="nc" id="L97">        GetResponse response = get(id);</span>
-<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (response.isExists()) {</span>
-<span class="nc" id="L99">            return new JSONObject(response.getSourceAsString());</span>
+<span class="fc" id="L97">        GetResponse response = get(id);</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc" id="L99">            return new JSONObject(response.getSourceAsString());</span>
         }
 <span class="nc" id="L101">        return null;</span>
     }
 
     public Map&lt;String, Object&gt; getMap(String id) {
-<span class="nc" id="L105">        GetResponse response = get(id);</span>
-<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (response.isExists()) {</span>
-<span class="nc" id="L107">            return response.getSourceAsMap();</span>
+<span class="fc" id="L105">        GetResponse response = get(id);</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc" id="L107">            return response.getSourceAsMap();</span>
         }
 <span class="nc" id="L109">        return null;</span>
     }
 
     public String getStr(String id) {
-<span class="nc" id="L113">        GetResponse response = get(id);</span>
-<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (response.isExists()) {</span>
-<span class="nc" id="L115">            return response.getSourceAsString();</span>
+<span class="fc" id="L113">        GetResponse response = get(id);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc" id="L115">            return response.getSourceAsString();</span>
         }
 <span class="nc" id="L117">        return null;</span>
     }
 
     public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
         try {
-<span class="nc" id="L122">            GetResponse response = get(id);</span>
-<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (response.isExists()) {</span>
-<span class="nc" id="L124">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
+<span class="fc" id="L122">            GetResponse response = get(id);</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">            if (response.isExists()) {</span>
+<span class="fc" id="L124">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
             }
 <span class="nc" id="L126">            return null;</span>
 <span class="nc" id="L127">        } catch (IOException e) {</span>
@@ -131,8 +131,8 @@ public class Search {
     }
 
     private GetResponse get(String id) {
-<span class="nc" id="L134">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
-<span class="nc" id="L135">        return getRequest.execute().actionGet();</span>
+<span class="fc" id="L134">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
+<span class="fc" id="L135">        return getRequest.execute().actionGet();</span>
     }
 
 
@@ -153,7 +153,7 @@ public class Search {
     }
 
     public ObjectMapper getObjectMapper() {
-<span class="nc" id="L156">        return objectMapper;</span>
+<span class="fc" id="L156">        return objectMapper;</span>
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
