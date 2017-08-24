@@ -3,9 +3,11 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.SearchException;
 import com.wirktop.esutils.index.Indexer;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -14,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -24,114 +28,141 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
-<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
+<span class="fc" id="L31">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
 
     private Client client;
     private String index;
     private String type;
-<span class="fc" id="L32">    private ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L36">    private ObjectMapper objectMapper = new ObjectMapper();</span>
     private Indexer indexer;
 
-<span class="fc" id="L35">    public Search(Client client, String index, String type) {</span>
-<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (client == null) {</span>
-<span class="fc" id="L37">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+<span class="fc" id="L39">    public Search(Client client, String index, String type) {</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (client == null) {</span>
+<span class="fc" id="L41">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (index == null) {</span>
-<span class="fc" id="L40">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (index == null) {</span>
+<span class="fc" id="L44">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (type == null) {</span>
-<span class="fc" id="L43">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (type == null) {</span>
+<span class="fc" id="L47">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
         }
-<span class="fc" id="L45">        this.client = client;</span>
-<span class="fc" id="L46">        this.index = index;</span>
-<span class="fc" id="L47">        this.type = type;</span>
-<span class="fc" id="L48">        this.indexer = new Indexer(this);</span>
-<span class="fc" id="L49">    }</span>
+<span class="fc" id="L49">        this.client = client;</span>
+<span class="fc" id="L50">        this.index = index;</span>
+<span class="fc" id="L51">        this.type = type;</span>
+<span class="fc" id="L52">        this.indexer = new Indexer(this);</span>
+<span class="fc" id="L53">    }</span>
 
     public JSONObject getJson(String id) {
-<span class="fc" id="L52">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L54">            return new JSONObject(response.getSourceAsString());</span>
+<span class="fc" id="L56">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L58">            return new JSONObject(response.getSourceAsString());</span>
         }
-<span class="fc" id="L56">        return null;</span>
+<span class="fc" id="L60">        return null;</span>
     }
 
     public Map&lt;String, Object&gt; getMap(String id) {
-<span class="fc" id="L60">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L62">            return response.getSourceAsMap();</span>
+<span class="fc" id="L64">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L66">            return response.getSourceAsMap();</span>
         }
-<span class="fc" id="L64">        return null;</span>
+<span class="fc" id="L68">        return null;</span>
     }
 
     public String getStr(String id) {
-<span class="fc" id="L68">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L70">            return response.getSourceAsString();</span>
+<span class="fc" id="L72">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L74">            return response.getSourceAsString();</span>
         }
-<span class="fc" id="L72">        return null;</span>
+<span class="fc" id="L76">        return null;</span>
     }
 
     public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
         try {
-<span class="fc" id="L77">            GetResponse response = get(id);</span>
-<span class="fc bfc" id="L78" title="All 2 branches covered.">            if (response.isExists()) {</span>
-<span class="fc" id="L79">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
+<span class="fc" id="L81">            GetResponse response = get(id);</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">            if (response.isExists()) {</span>
+<span class="fc" id="L83">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
             }
-<span class="fc" id="L81">            return null;</span>
-<span class="nc" id="L82">        } catch (IOException e) {</span>
-<span class="nc" id="L83">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L84">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L85">            return null;</span>
+<span class="nc" id="L86">        } catch (IOException e) {</span>
+<span class="nc" id="L87">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L88">            throw new SearchException(e.getMessage(), e);</span>
         }
     }
 
     private GetResponse get(String id) {
-<span class="fc" id="L89">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
-<span class="fc" id="L90">        return getRequest.execute().actionGet();</span>
+<span class="fc" id="L93">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
+<span class="fc" id="L94">        return getRequest.execute().actionGet();</span>
     }
 
+    public void search(QueryBuilder query, OutputStream outputStream) {
+<span class="fc" id="L98">        search(searchRequest().setQuery(query), outputStream);</span>
+<span class="fc" id="L99">    }</span>
+
+    public void search(SearchRequestBuilder request, OutputStream outputStream) {
+<span class="fc" id="L102">        SearchResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L103">        PrintStream printStream = new PrintStream(outputStream);</span>
+<span class="fc" id="L104">        printStream.print(response.toString());</span>
+<span class="fc" id="L105">        printStream.flush();</span>
+<span class="fc" id="L106">    }</span>
+
+    public long count() {
+<span class="fc" id="L109">        return count(null);</span>
+    }
+
+    public long count(QueryBuilder filter) {
+        try {
+<span class="fc" id="L114">            SearchRequestBuilder builder = searchRequest().setSize(0);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            if (filter != null) {</span>
+<span class="fc" id="L116">                builder = builder.setPostFilter(filter);</span>
+            }
+<span class="fc" id="L118">            SearchResponse response = builder.execute().actionGet();</span>
+<span class="fc" id="L119">            return response.getHits().getTotalHits();</span>
+<span class="nc" id="L120">        } catch (ElasticsearchException e) {</span>
+<span class="nc" id="L121">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L122">            throw new SearchException(e.getMessage(), e);</span>
+        }
+    }
 
     public Indexer indexer() {
-<span class="fc" id="L95">        return indexer;</span>
+<span class="fc" id="L127">        return indexer;</span>
     }
 
     public Client client() {
-<span class="fc" id="L99">        return client;</span>
+<span class="fc" id="L131">        return client;</span>
     }
 
-    public SearchRequestBuilder searchRequest() {
-<span class="fc" id="L103">        return client.prepareSearch(index()).setTypes(type());</span>
+    protected SearchRequestBuilder searchRequest() {
+<span class="fc" id="L135">        return client.prepareSearch(index()).setTypes(type());</span>
     }
 
     public Stream&lt;SearchHit&gt; scroll(QueryBuilder query) {
-<span class="fc" id="L107">        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
-<span class="fc" id="L108">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+<span class="fc" id="L139">        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L140">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query) {
-<span class="fc" id="L112">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
+<span class="fc" id="L144">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query, int pageSize) {
-<span class="fc" id="L116">        SearchRequestBuilder request = searchRequest().setQuery(query);</span>
-<span class="fc" id="L117">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
-<span class="fc" id="L118">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+<span class="fc" id="L148">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
+<span class="fc" id="L149">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
     public String index() {
-<span class="fc" id="L122">        return index;</span>
+<span class="fc" id="L153">        return index;</span>
     }
 
     public String type() {
-<span class="fc" id="L126">        return type;</span>
+<span class="fc" id="L157">        return type;</span>
     }
 
     public ObjectMapper getObjectMapper() {
-<span class="fc" id="L130">        return objectMapper;</span>
+<span class="fc" id="L161">        return objectMapper;</span>
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
-<span class="nc" id="L134">        this.objectMapper = objectMapper;</span>
-<span class="nc" id="L135">    }</span>
+<span class="nc" id="L165">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L166">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,6 +1,7 @@
 package com.wirktop.esutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchResponse;
@@ -113,7 +114,11 @@ public abstract class TestBase {
     }
 
     public Search search(String index, String type) {
-        return new ElasticSearchClient(client()).search(index, type);
+        return esClient().search(index, type);
+    }
+
+    public ElasticSearchClient esClient() {
+        return new ElasticSearchClient(client());
     }
 
     public Search searchTcp(String index, String type) {
@@ -162,5 +167,19 @@ public abstract class TestBase {
     public Client httpClient() {
         ClientConfig config = new ClientConfig();
         return ClientBuilder.newClient(config);
+    }
+
+    public void indexStructuredDocs(int docCount, Search search) throws Exception {
+        Random random = new Random();
+        try (IndexBatch batch = search.indexer().batch()) {
+            JSONObject jsonObject = docAsJson("doc-template-mapped.json");
+            for (int i = 0; i < docCount; i++) {
+                JSONObject json = new JSONObject(jsonObject.toString());
+                json.put("name", UUID.randomUUID().toString());
+                json.put("age", Math.abs(random.nextInt()) % 100);
+                json.put("gender", i % 2 == 0 ? "male" : "female");
+                batch.add(json);
+            }
+        }
     }
 }

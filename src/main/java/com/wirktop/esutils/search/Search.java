@@ -3,9 +3,11 @@ package com.wirktop.esutils.search;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.SearchException;
 import com.wirktop.esutils.index.Indexer;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -14,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -90,6 +94,34 @@ public class Search {
         return getRequest.execute().actionGet();
     }
 
+    public void search(QueryBuilder query, OutputStream outputStream) {
+        search(searchRequest().setQuery(query), outputStream);
+    }
+
+    public void search(SearchRequestBuilder request, OutputStream outputStream) {
+        SearchResponse response = request.execute().actionGet();
+        PrintStream printStream = new PrintStream(outputStream);
+        printStream.print(response.toString());
+        printStream.flush();
+    }
+
+    public long count() {
+        return count(null);
+    }
+
+    public long count(QueryBuilder filter) {
+        try {
+            SearchRequestBuilder builder = searchRequest().setSize(0);
+            if (filter != null) {
+                builder = builder.setPostFilter(filter);
+            }
+            SearchResponse response = builder.execute().actionGet();
+            return response.getHits().getTotalHits();
+        } catch (ElasticsearchException e) {
+            log.error(e.getMessage(), e);
+            throw new SearchException(e.getMessage(), e);
+        }
+    }
 
     public Indexer indexer() {
         return indexer;
@@ -99,7 +131,7 @@ public class Search {
         return client;
     }
 
-    public SearchRequestBuilder searchRequest() {
+    protected SearchRequestBuilder searchRequest() {
         return client.prepareSearch(index()).setTypes(type());
     }
 
@@ -113,7 +145,6 @@ public class Search {
     }
 
     public Stream<SearchHit> search(QueryBuilder query, int pageSize) {
-        SearchRequestBuilder request = searchRequest().setQuery(query);
         SearchIterator iterator = new SearchIterator(this, query, pageSize);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }

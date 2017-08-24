@@ -1,0 +1,18 @@
+{
+    "template": "*",
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "name": {
+                    "type": "text"
+                },
+                "age": {
+                    "type": "integer"
+                },
+                "gender": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}

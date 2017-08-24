@@ -8,6 +8,8 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -128,4 +130,38 @@ public class SearchTest extends TestBase {
         Assert.assertNull(search.getMap(UUID.randomUUID().toString()));
         Assert.assertNotNull(id);
     }
+
+    @Test
+    public void testCount() throws Exception {
+        int docCount = 100;
+        String index = "test-count";
+        Search search = search(index, "person");
+        esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
+        indexStructuredDocs(docCount, search);
+        waitForIndexedDocs(index, 100);
+        Assert.assertEquals(100, search.count());
+        Assert.assertEquals(100, search.count(null));
+        Assert.assertEquals(100, search.count(QueryBuilders.termQuery("gender", "male")) + search.count(QueryBuilders.termQuery("gender", "female")));
+    }
+
+    @Test
+    public void testStream() throws Exception {
+        int docCount = 100;
+        String index = "test-stream";
+        Search search = search(index, "person");
+        esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
+        indexStructuredDocs(docCount, search);
+        waitForIndexedDocs(index, 100);
+
+        ByteArrayOutputStream out1 = new ByteArrayOutputStream();
+        search.search(QueryBuilders.termQuery("gender", "female"), out1);
+        JSONObject r1 = new JSONObject(new String(out1.toByteArray(), StandardCharsets.UTF_8));
+
+        ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+        search.search(QueryBuilders.termQuery("gender", "male"), out2);
+        JSONObject r2 = new JSONObject(new String(out2.toByteArray(), StandardCharsets.UTF_8));
+
+        Assert.assertEquals(100, r1.getJSONObject("hits").getInt("total") + r2.getJSONObject("hits").getInt("total"));
+    }
+
 }
