@@ -2,11 +2,17 @@
 
 import com.wirktop.esutils.SearchException;
 import org.apache.commons.io.IOUtils;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,40 +27,71 @@ import java.util.concurrent.ExecutionException;
  */
 public class Admin {
 
-<span class="fc" id="L24">    private static final Logger log = LoggerFactory.getLogger(Admin.class);</span>
+<span class="fc" id="L30">    private static final Logger log = LoggerFactory.getLogger(Admin.class);</span>
 
     private Client client;
 
-<span class="fc" id="L28">    public Admin(Client client) {</span>
-<span class="fc" id="L29">        this.client = client;</span>
-<span class="fc" id="L30">    }</span>
+<span class="fc" id="L34">    public Admin(Client client) {</span>
+<span class="fc" id="L35">        this.client = client;</span>
+<span class="fc" id="L36">    }</span>
 
     public void createTemplate(String templateName, String jsonContent) {
         try {
-<span class="fc" id="L34">            PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);</span>
-<span class="fc" id="L35">            PutIndexTemplateResponse response = client.admin().indices().execute(PutIndexTemplateAction.INSTANCE, request).get();</span>
-<span class="fc" id="L36">            checkResponse(response);</span>
-<span class="fc" id="L37">            log.info(&quot;Created template {}&quot;, templateName);</span>
-<span class="nc" id="L38">        } catch (InterruptedException | ExecutionException e) {</span>
-<span class="nc" id="L39">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L40">            throw new SearchException(e.getMessage(), e);</span>
-<span class="fc" id="L41">        }</span>
-<span class="fc" id="L42">    }</span>
+<span class="fc" id="L40">            PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);</span>
+<span class="fc" id="L41">            PutIndexTemplateResponse response = client.admin().indices().execute(PutIndexTemplateAction.INSTANCE, request).get();</span>
+<span class="fc" id="L42">            checkResponse(response);</span>
+<span class="fc" id="L43">            log.info(&quot;Created template {}&quot;, templateName);</span>
+<span class="nc" id="L44">        } catch (InterruptedException | ExecutionException e) {</span>
+<span class="nc" id="L45">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L46">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L47">        }</span>
+<span class="fc" id="L48">    }</span>
 
     public void createTemplate(String templateName, InputStream jsonInput) {
         try {
-<span class="fc" id="L46">            String templateContent = IOUtils.toString(jsonInput, StandardCharsets.UTF_8.name());</span>
-<span class="fc" id="L47">            createTemplate(templateName, templateContent);</span>
-<span class="nc" id="L48">        } catch (IOException e) {</span>
-<span class="nc" id="L49">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L50">            throw new SearchException(e.getMessage(), e);</span>
-<span class="fc" id="L51">        }</span>
-<span class="fc" id="L52">    }</span>
+<span class="fc" id="L52">            String templateContent = IOUtils.toString(jsonInput, StandardCharsets.UTF_8.name());</span>
+<span class="fc" id="L53">            createTemplate(templateName, templateContent);</span>
+<span class="nc" id="L54">        } catch (IOException e) {</span>
+<span class="nc" id="L55">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L56">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L57">        }</span>
+<span class="fc" id="L58">    }</span>
+
+    public void createIndex(String index) {
+<span class="fc" id="L61">        createIndex(index, -1);</span>
+<span class="fc" id="L62">    }</span>
+
+    public void createIndex(String index, int shards) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (!indexExists(index)) {</span>
+<span class="fc" id="L66">            CreateIndexRequest request = new CreateIndexRequest(index);</span>
+
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            if (shards &gt; 0) {</span>
+<span class="fc" id="L69">                Settings.Builder settings = Settings.builder()</span>
+<span class="fc" id="L70">                        .put(&quot;index.number_of_shards&quot;, shards);</span>
+<span class="fc" id="L71">                request = request.settings(settings);</span>
+            }
+
+<span class="fc" id="L74">            CreateIndexResponse response = client.admin().indices().create(request).actionGet();</span>
+<span class="fc" id="L75">            checkResponse(response);</span>
+<span class="fc" id="L76">            final RefreshResponse refresh = client.admin().indices().prepareRefresh(index).execute().actionGet();</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            if (refresh.getSuccessfulShards() &lt; 1) {</span>
+<span class="nc" id="L78">                throw new SearchException(String.format(&quot;Index fail in %s shards.&quot;, refresh.getFailedShards()));</span>
+            }
+<span class="fc" id="L80">            log.info(&quot;Created index: {}&quot;, index);</span>
+<span class="fc" id="L81">        } else {</span>
+<span class="fc" id="L82">            log.info(&quot;Index {} already exists. Skipping&quot;, index);</span>
+        }
+<span class="fc" id="L84">    }</span>
+
+    public boolean indexExists(String index) {
+<span class="fc" id="L87">        IndicesExistsResponse response = client.admin().indices().exists(new IndicesExistsRequest(index)).actionGet();</span>
+<span class="fc" id="L88">        return response.isExists();</span>
+    }
 
     public static void checkResponse(AcknowledgedResponse response) {
-<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if (!response.isAcknowledged()) {</span>
-<span class="nc" id="L56">            throw new SearchException(&quot;Error executing Elasticsearch request&quot;);</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (!response.isAcknowledged()) {</span>
+<span class="nc" id="L93">            throw new SearchException(&quot;Error executing Elasticsearch request&quot;);</span>
         }
-<span class="fc" id="L58">    }</span>
+<span class="fc" id="L95">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

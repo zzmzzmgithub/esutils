@@ -2,11 +2,17 @@ package com.wirktop.esutils.admin;
 
 import com.wirktop.esutils.SearchException;
 import org.apache.commons.io.IOUtils;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +55,37 @@ public class Admin {
             log.error(e.getMessage(), e);
             throw new SearchException(e.getMessage(), e);
         }
+    }
+
+    public void createIndex(String index) {
+        createIndex(index, -1);
+    }
+
+    public void createIndex(String index, int shards) {
+        if (!indexExists(index)) {
+            CreateIndexRequest request = new CreateIndexRequest(index);
+
+            if (shards > 0) {
+                Settings.Builder settings = Settings.builder()
+                        .put("index.number_of_shards", shards);
+                request = request.settings(settings);
+            }
+
+            CreateIndexResponse response = client.admin().indices().create(request).actionGet();
+            checkResponse(response);
+            final RefreshResponse refresh = client.admin().indices().prepareRefresh(index).execute().actionGet();
+            if (refresh.getSuccessfulShards() < 1) {
+                throw new SearchException(String.format("Index fail in %s shards.", refresh.getFailedShards()));
+            }
+            log.info("Created index: {}", index);
+        } else {
+            log.info("Index {} already exists. Skipping", index);
+        }
+    }
+
+    public boolean indexExists(String index) {
+        IndicesExistsResponse response = client.admin().indices().exists(new IndicesExistsRequest(index)).actionGet();
+        return response.isExists();
     }
 
     public static void checkResponse(AcknowledgedResponse response) {
