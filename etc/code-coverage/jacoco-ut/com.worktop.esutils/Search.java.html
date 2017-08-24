@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Search.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">esutils</a> &gt; <a href="index.source.html" class="el_package">com.worktop.esutils</a> &gt; <span class="el_source">Search.java</span></div><h1>Search.java</h1><pre class="source lang-java linenums">package com.worktop.esutils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.worktop.esutils.index.Indexer;
+import org.elasticsearch.action.get.GetRequestBuilder;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Map;
+
+/**
+ * @author Cosmin Marginean
+ */
+public class Search {
+
+<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
+
+    public static final String ID = &quot;_id&quot;;
+
+    private Client client;
+    private String index;
+    private String type;
+<span class="fc" id="L34">    private ObjectMapper objectMapper = new ObjectMapper();</span>
+    private Indexer indexer;
+
+    public static SearchClientBuilder clientBuilder() {
+<span class="fc" id="L38">        return new SearchClientBuilder();</span>
+    }
+
+    public static SearchTransportBuilder transportBuilder() {
+<span class="fc" id="L42">        return new SearchTransportBuilder();</span>
+    }
+
+    /**
+     * @param nodes       A collection of hostname:port elements
+     * @param clusterName
+     * @param index
+     * @param type
+     */
+<span class="fc" id="L51">    public Search(Collection&lt;String&gt; nodes, String clusterName, String index, String type) {</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (clusterName == null) {</span>
+<span class="fc" id="L53">            throw new IllegalArgumentException(&quot;clusterName argument cannot be null&quot;);</span>
+        }
+
+        try {
+<span class="fc" id="L57">            Settings settings = Settings.builder().put(&quot;cluster.name&quot;, clusterName).build();</span>
+<span class="fc" id="L58">            TransportClient client = new PreBuiltTransportClient(settings);</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">            for (String nodeAddr : nodes) {</span>
+<span class="fc" id="L60">                String[] addressElements = nodeAddr.split(&quot;:&quot;);</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">                if (addressElements.length != 2) {</span>
+<span class="fc" id="L62">                    throw new IllegalArgumentException(String.format(&quot;Address %s has incorrect format (hostname:port)&quot;, nodeAddr));</span>
+                }
+<span class="fc" id="L64">                String hostname = addressElements[0].trim();</span>
+<span class="fc" id="L65">                int port = Integer.parseInt(addressElements[1].trim());</span>
+<span class="fc" id="L66">                InetAddress byName = InetAddress.getByName(hostname);</span>
+<span class="fc" id="L67">                client.addTransportAddress(new InetSocketTransportAddress(byName, port));</span>
+<span class="fc" id="L68">            }</span>
+<span class="fc" id="L69">            initialize(client, index, type);</span>
+<span class="nc" id="L70">        } catch (UnknownHostException e) {</span>
+<span class="nc" id="L71">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L72">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L73">        }</span>
+<span class="fc" id="L74">    }</span>
+
+<span class="fc" id="L76">    protected Search(Client client, String index, String type) {</span>
+<span class="fc" id="L77">        initialize(client, index, type);</span>
+<span class="fc" id="L78">    }</span>
+
+    private void initialize(Client client, String index, String type) {
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (client == null) {</span>
+<span class="fc" id="L82">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (index == null) {</span>
+<span class="fc" id="L85">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (type == null) {</span>
+<span class="fc" id="L88">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
+        }
+<span class="fc" id="L90">        this.client = client;</span>
+<span class="fc" id="L91">        this.index = index;</span>
+<span class="fc" id="L92">        this.type = type;</span>
+<span class="fc" id="L93">        this.indexer = new Indexer(this);</span>
+<span class="fc" id="L94">    }</span>
+
+    public JSONObject getJson(String id) {
+<span class="nc" id="L97">        GetResponse response = get(id);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (response.isExists()) {</span>
+<span class="nc" id="L99">            return new JSONObject(response.getSourceAsString());</span>
+        }
+<span class="nc" id="L101">        return null;</span>
+    }
+
+    public Map&lt;String, Object&gt; getMap(String id) {
+<span class="nc" id="L105">        GetResponse response = get(id);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (response.isExists()) {</span>
+<span class="nc" id="L107">            return response.getSourceAsMap();</span>
+        }
+<span class="nc" id="L109">        return null;</span>
+    }
+
+    public String getStr(String id) {
+<span class="nc" id="L113">        GetResponse response = get(id);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (response.isExists()) {</span>
+<span class="nc" id="L115">            return response.getSourceAsString();</span>
+        }
+<span class="nc" id="L117">        return null;</span>
+    }
+
+    public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
+        try {
+<span class="nc" id="L122">            GetResponse response = get(id);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (response.isExists()) {</span>
+<span class="nc" id="L124">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
+            }
+<span class="nc" id="L126">            return null;</span>
+<span class="nc" id="L127">        } catch (IOException e) {</span>
+<span class="nc" id="L128">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L129">            throw new SearchException(e.getMessage(), e);</span>
+        }
+    }
+
+    private GetResponse get(String id) {
+<span class="nc" id="L134">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
+<span class="nc" id="L135">        return getRequest.execute().actionGet();</span>
+    }
+
+
+    public Indexer indexer() {
+<span class="fc" id="L140">        return indexer;</span>
+    }
+
+    public Client client() {
+<span class="fc" id="L144">        return client;</span>
+    }
+
+    public String index() {
+<span class="fc" id="L148">        return index;</span>
+    }
+
+    public String type() {
+<span class="fc" id="L152">        return type;</span>
+    }
+
+    public ObjectMapper getObjectMapper() {
+<span class="nc" id="L156">        return objectMapper;</span>
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+<span class="nc" id="L160">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L161">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
