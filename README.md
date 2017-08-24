@@ -5,7 +5,7 @@
 
 Other considerations:
 * Unit tests use an actual ElasticSearch instance (no unsupported embedded etc)
-* Decent code coverage: [etc/code-coverage/jacoco-ut/com.worktop.esutils.index/index.html]
+* Decent code coverage: (check `etc/code-coverage/jacoco-ut/com.worktop.esutils.index/index.html`)
 * Small footprint
  
 ## Features
@@ -71,7 +71,7 @@ The field is checked against each document and only applied when found and of ty
 This is a useful mechanism to index a `Stream` or any other potentially unbounded data set.
 `IndexBatch` implements `AutoCloseable` which means it requires no cleanup (i.e. bulk-indexing the last items that might not be a complete batch) 
 ```
-List<JSONObject> docs = ...
+Stream<JSONObject> docs = ...
 try (IndexBatch batch = indexer.batch(100)) {
     docs.forEach((doc) -> batch.add(doc));
 }
