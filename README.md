@@ -36,6 +36,7 @@ Indexer = search.indexer();
 ```
 
 ## Indexing
+https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
 search.indexer().index(document);
@@ -81,6 +82,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 ```
 
 ## Searching
+https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/search/Search.html
 #### Search data
 ```
 search.seach(QueryBuilders.matchAllQuery(), 10)
@@ -102,6 +104,7 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
+https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/admin/Admin.html
 #### Indices
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
