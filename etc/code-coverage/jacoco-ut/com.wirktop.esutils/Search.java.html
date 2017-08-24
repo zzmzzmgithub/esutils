@@ -74,9 +74,9 @@ public class Search {
 <span class="fc" id="L74">                client.addTransportAddress(new InetSocketTransportAddress(byName, port));</span>
 <span class="fc" id="L75">            }</span>
 <span class="fc" id="L76">            initialize(client, index, type);</span>
-<span class="nc" id="L77">        } catch (UnknownHostException e) {</span>
-<span class="nc" id="L78">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
-<span class="nc" id="L79">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L77">        } catch (UnknownHostException e) {</span>
+<span class="fc" id="L78">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L79">            throw new SearchException(e.getMessage(), e);</span>
 <span class="fc" id="L80">        }</span>
 <span class="fc" id="L81">    }</span>
 
@@ -102,35 +102,35 @@ public class Search {
 
     public JSONObject getJson(String id) {
 <span class="fc" id="L104">        GetResponse response = get(id);</span>
-<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (response.isExists()) {</span>
 <span class="fc" id="L106">            return new JSONObject(response.getSourceAsString());</span>
         }
-<span class="nc" id="L108">        return null;</span>
+<span class="fc" id="L108">        return null;</span>
     }
 
     public Map&lt;String, Object&gt; getMap(String id) {
 <span class="fc" id="L112">        GetResponse response = get(id);</span>
-<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (response.isExists()) {</span>
 <span class="fc" id="L114">            return response.getSourceAsMap();</span>
         }
-<span class="nc" id="L116">        return null;</span>
+<span class="fc" id="L116">        return null;</span>
     }
 
     public String getStr(String id) {
 <span class="fc" id="L120">        GetResponse response = get(id);</span>
-<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (response.isExists()) {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (response.isExists()) {</span>
 <span class="fc" id="L122">            return response.getSourceAsString();</span>
         }
-<span class="nc" id="L124">        return null;</span>
+<span class="fc" id="L124">        return null;</span>
     }
 
     public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
         try {
 <span class="fc" id="L129">            GetResponse response = get(id);</span>
-<span class="pc bpc" id="L130" title="1 of 2 branches missed.">            if (response.isExists()) {</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">            if (response.isExists()) {</span>
 <span class="fc" id="L131">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
             }
-<span class="nc" id="L133">            return null;</span>
+<span class="fc" id="L133">            return null;</span>
 <span class="nc" id="L134">        } catch (IOException e) {</span>
 <span class="nc" id="L135">            log.error(e.getMessage(), e);</span>
 <span class="nc" id="L136">            throw new SearchException(e.getMessage(), e);</span>
@@ -161,24 +161,20 @@ public class Search {
 <span class="fc" id="L161">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
-    public SearchRequestBuilder searchRequestNoType() {
-<span class="nc" id="L165">        return client.prepareSearch(index());</span>
-    }
-
     public String index() {
-<span class="fc" id="L169">        return index;</span>
+<span class="fc" id="L165">        return index;</span>
     }
 
     public String type() {
-<span class="fc" id="L173">        return type;</span>
+<span class="fc" id="L169">        return type;</span>
     }
 
     public ObjectMapper getObjectMapper() {
-<span class="fc" id="L177">        return objectMapper;</span>
+<span class="fc" id="L173">        return objectMapper;</span>
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
-<span class="nc" id="L181">        this.objectMapper = objectMapper;</span>
-<span class="nc" id="L182">    }</span>
+<span class="nc" id="L177">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L178">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
