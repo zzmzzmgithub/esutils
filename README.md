@@ -5,7 +5,17 @@
 * Unit tests use an actual ElasticSearch instance, starts/stops automatically on build (embedded is not supported anymore so we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
 * Code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
- 
+
+### Maven
+
+```
+<dependency>
+  <groupId>com.wirktop</groupId>
+  <artifactId>esutils</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
 ## High level concepts
 The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search`, `Admin` etc.
 The objective is to have _some_ separation of concerns, but to also have some uniformity in the API and component dependencies.
