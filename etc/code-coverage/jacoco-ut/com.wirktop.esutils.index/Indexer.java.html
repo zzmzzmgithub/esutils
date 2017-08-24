@@ -51,9 +51,9 @@ public class Indexer {
 <span class="fc" id="L51">            StringWriter writer = new StringWriter();</span>
 <span class="fc" id="L52">            search.getObjectMapper().writer().writeValue(writer, pojo);</span>
 <span class="fc" id="L53">            return index(id, writer.toString(), refresh);</span>
-<span class="nc" id="L54">        } catch (IOException e) {</span>
-<span class="nc" id="L55">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L56">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L54">        } catch (IOException e) {</span>
+<span class="fc" id="L55">            log.error(e.getMessage(), e);</span>
+<span class="fc" id="L56">            throw new SearchException(e.getMessage(), e);</span>
         }
     }
 

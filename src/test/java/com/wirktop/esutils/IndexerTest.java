@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,25 @@ public class IndexerTest extends TestBase {
         String newId = indexer.index(document);
         System.out.println("Got ID: " + newId);
         assertSamePojo1(search, document, newId);
+    }
+
+    @Test(expected = SearchException.class)
+    public void testIndexPojoFail() throws Exception {
+        Search search = search("index1", "type1");
+        Indexer indexer = search.indexer();
+        indexer.index("asdasdsa", new TestPojoBroken(), false);
+    }
+
+    public static class TestPojoBroken {
+        private Method m;
+
+        public Method getM() {
+            throw new RuntimeException("aa");
+        }
+
+        public void setM(Method m) {
+            this.m = m;
+        }
     }
 
     @Test
