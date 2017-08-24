@@ -3,8 +3,42 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>9</version>
+    </parent>
 
-    <groupId>com.worktop</groupId>
+    <name>ElasticSearch Java Utilities</name>
+    <description>
+        esutils is a Java library that adds some fluency to the interaction with ElasticSeach in a Java environment. Please check the Features section for the
+        complete set of functionalities.
+    </description>
+    <url>https://github.com/cosmin-marginean/esutils</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Cosmin Marginean</name>
+            <email>cos.marginean@gmail.com</email>
+            <organization>Wirktop</organization>
+            <organizationUrl>https://github.com/cosmin-marginean</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/cosmin-marginean/esutils.git</connection>
+        <developerConnection>scm:git:ssh://github.com/cosmin-marginean/esutils.git</developerConnection>
+        <url>https://github.com/cosmin-marginean/esutils</url>
+    </scm>
+
+    <groupId>com.wirktop</groupId>
     <artifactId>esutils</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
@@ -68,6 +102,21 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.4.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -77,6 +126,43 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -128,7 +214,7 @@
                             <target>
                                 <exec executable="etc/run-es.sh" spawn="true">
                                     <arg value="5.5.2"/>
-                                    <arg value="worktop-elasticsearch-test"/>
+                                    <arg value="wirktop-esutils-test"/>
                                 </exec>
                                 <exec executable="etc/wait-es.sh"/>
                             </target>
@@ -153,4 +239,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

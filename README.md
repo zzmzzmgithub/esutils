@@ -8,7 +8,7 @@ THIS IS WORK IN PROGRESS
 Other considerations:
 * Unit tests use an actual ElasticSearch instance (no unsupported embedded etc)
 * Decent code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
-* Small footprint
+* License: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.txt)
  
 ## Features
 ### High level concepts
