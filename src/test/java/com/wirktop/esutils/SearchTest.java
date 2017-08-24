@@ -125,9 +125,11 @@ public class SearchTest extends TestBase {
     @Test
     public void testMissingDoc() throws Exception {
         Search search = search("test-missing-doc", "type1");
+        String id = search.indexer().index(randomDoc());
         Assert.assertNull(search.get("askjdkjbadfasdf", TestPojo.class));
         Assert.assertNull(search.getStr("askjdkjbadfas12312093df"));
         Assert.assertNull(search.getJson(UUID.randomUUID().toString()));
         Assert.assertNull(search.getMap(UUID.randomUUID().toString()));
+        Assert.assertNotNull(id);
     }
 }
