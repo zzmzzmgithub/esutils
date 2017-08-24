@@ -40,8 +40,8 @@ Index methods return the `_id` of the indexed document.
 `document` can be one of the following:
 * `Map<String,Object>`
 * `org.json.JSONObject`
-* `String` (a the JSON string for this document)
-* Any POJO (this would serialize it to JSON) 
+* `String` (the JSON string for this document)
+* Any Java object (this would serialize it to JSON)
 
 #### Bulk index documents
 ```
