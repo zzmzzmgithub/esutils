@@ -7,7 +7,7 @@ THIS IS WORK IN PROGRESS
 
 Other considerations:
 * Unit tests use an actual ElasticSearch instance, starts/stops automatically on build (embedded is not supported anymore so we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
-* Decent code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
+* Code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
  
 ## High level concepts
