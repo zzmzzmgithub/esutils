@@ -7,20 +7,13 @@ import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -31,150 +24,107 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
-<span class="fc" id="L34">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
+<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
 
     public static final String ID = &quot;_id&quot;;
 
     private Client client;
     private String index;
     private String type;
-<span class="fc" id="L41">    private ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L34">    private ObjectMapper objectMapper = new ObjectMapper();</span>
     private Indexer indexer;
 
-    public static SearchClientBuilder clientBuilder() {
-<span class="fc" id="L45">        return new SearchClientBuilder();</span>
-    }
-
-    public static SearchTransportBuilder transportBuilder() {
-<span class="fc" id="L49">        return new SearchTransportBuilder();</span>
-    }
-
-    /**
-     * @param nodes       A collection of hostname:port elements
-     * @param clusterName
-     * @param index
-     * @param type
-     */
-<span class="fc" id="L58">    public Search(Collection&lt;String&gt; nodes, String clusterName, String index, String type) {</span>
-<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (clusterName == null) {</span>
-<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;clusterName argument cannot be null&quot;);</span>
+<span class="fc" id="L37">    protected Search(Client client, String index, String type) {</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">        if (client == null) {</span>
+<span class="nc" id="L39">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
         }
-
-        try {
-<span class="fc" id="L64">            Settings settings = Settings.builder().put(&quot;cluster.name&quot;, clusterName).build();</span>
-<span class="fc" id="L65">            TransportClient client = new PreBuiltTransportClient(settings);</span>
-<span class="fc bfc" id="L66" title="All 2 branches covered.">            for (String nodeAddr : nodes) {</span>
-<span class="fc" id="L67">                String[] addressElements = nodeAddr.split(&quot;:&quot;);</span>
-<span class="fc bfc" id="L68" title="All 2 branches covered.">                if (addressElements.length != 2) {</span>
-<span class="fc" id="L69">                    throw new IllegalArgumentException(String.format(&quot;Address %s has incorrect format (hostname:port)&quot;, nodeAddr));</span>
-                }
-<span class="fc" id="L71">                String hostname = addressElements[0].trim();</span>
-<span class="fc" id="L72">                int port = Integer.parseInt(addressElements[1].trim());</span>
-<span class="fc" id="L73">                InetAddress byName = InetAddress.getByName(hostname);</span>
-<span class="fc" id="L74">                client.addTransportAddress(new InetSocketTransportAddress(byName, port));</span>
-<span class="fc" id="L75">            }</span>
-<span class="fc" id="L76">            initialize(client, index, type);</span>
-<span class="fc" id="L77">        } catch (UnknownHostException e) {</span>
-<span class="fc" id="L78">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
-<span class="fc" id="L79">            throw new SearchException(e.getMessage(), e);</span>
-<span class="fc" id="L80">        }</span>
-<span class="fc" id="L81">    }</span>
-
-<span class="fc" id="L83">    protected Search(Client client, String index, String type) {</span>
-<span class="fc" id="L84">        initialize(client, index, type);</span>
-<span class="fc" id="L85">    }</span>
-
-    private void initialize(Client client, String index, String type) {
-<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (client == null) {</span>
-<span class="fc" id="L89">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (index == null) {</span>
+<span class="fc" id="L42">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (index == null) {</span>
-<span class="fc" id="L92">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (type == null) {</span>
+<span class="fc" id="L45">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (type == null) {</span>
-<span class="fc" id="L95">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
-        }
-<span class="fc" id="L97">        this.client = client;</span>
-<span class="fc" id="L98">        this.index = index;</span>
-<span class="fc" id="L99">        this.type = type;</span>
-<span class="fc" id="L100">        this.indexer = new Indexer(this);</span>
-<span class="fc" id="L101">    }</span>
+<span class="fc" id="L47">        this.client = client;</span>
+<span class="fc" id="L48">        this.index = index;</span>
+<span class="fc" id="L49">        this.type = type;</span>
+<span class="fc" id="L50">        this.indexer = new Indexer(this);</span>
+<span class="fc" id="L51">    }</span>
 
     public JSONObject getJson(String id) {
-<span class="fc" id="L104">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L106">            return new JSONObject(response.getSourceAsString());</span>
+<span class="fc" id="L54">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L56">            return new JSONObject(response.getSourceAsString());</span>
         }
-<span class="fc" id="L108">        return null;</span>
+<span class="fc" id="L58">        return null;</span>
     }
 
     public Map&lt;String, Object&gt; getMap(String id) {
-<span class="fc" id="L112">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L114">            return response.getSourceAsMap();</span>
+<span class="fc" id="L62">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L64">            return response.getSourceAsMap();</span>
         }
-<span class="fc" id="L116">        return null;</span>
+<span class="fc" id="L66">        return null;</span>
     }
 
     public String getStr(String id) {
-<span class="fc" id="L120">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (response.isExists()) {</span>
-<span class="fc" id="L122">            return response.getSourceAsString();</span>
+<span class="fc" id="L70">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L72">            return response.getSourceAsString();</span>
         }
-<span class="fc" id="L124">        return null;</span>
+<span class="fc" id="L74">        return null;</span>
     }
 
     public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
         try {
-<span class="fc" id="L129">            GetResponse response = get(id);</span>
-<span class="fc bfc" id="L130" title="All 2 branches covered.">            if (response.isExists()) {</span>
-<span class="fc" id="L131">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
+<span class="fc" id="L79">            GetResponse response = get(id);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">            if (response.isExists()) {</span>
+<span class="fc" id="L81">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
             }
-<span class="fc" id="L133">            return null;</span>
-<span class="nc" id="L134">        } catch (IOException e) {</span>
-<span class="nc" id="L135">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L136">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L83">            return null;</span>
+<span class="nc" id="L84">        } catch (IOException e) {</span>
+<span class="nc" id="L85">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L86">            throw new SearchException(e.getMessage(), e);</span>
         }
     }
 
     private GetResponse get(String id) {
-<span class="fc" id="L141">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
-<span class="fc" id="L142">        return getRequest.execute().actionGet();</span>
+<span class="fc" id="L91">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
+<span class="fc" id="L92">        return getRequest.execute().actionGet();</span>
     }
 
 
     public Indexer indexer() {
-<span class="fc" id="L147">        return indexer;</span>
+<span class="fc" id="L97">        return indexer;</span>
     }
 
     public Client client() {
-<span class="fc" id="L151">        return client;</span>
+<span class="fc" id="L101">        return client;</span>
     }
 
     public SearchRequestBuilder searchRequest() {
-<span class="fc" id="L155">        return client.prepareSearch(index())</span>
-<span class="fc" id="L156">                .setTypes(type());</span>
+<span class="fc" id="L105">        return client.prepareSearch(index())</span>
+<span class="fc" id="L106">                .setTypes(type());</span>
     }
 
     public Stream&lt;SearchHit&gt; scroll(QueryBuilder query) {
-<span class="fc" id="L160">        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
-<span class="fc" id="L161">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+<span class="fc" id="L110">        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L111">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
     public String index() {
-<span class="fc" id="L165">        return index;</span>
+<span class="fc" id="L115">        return index;</span>
     }
 
     public String type() {
-<span class="fc" id="L169">        return type;</span>
+<span class="fc" id="L119">        return type;</span>
     }
 
     public ObjectMapper getObjectMapper() {
-<span class="fc" id="L173">        return objectMapper;</span>
+<span class="fc" id="L123">        return objectMapper;</span>
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
-<span class="nc" id="L177">        this.objectMapper = objectMapper;</span>
-<span class="nc" id="L178">    }</span>
+<span class="nc" id="L127">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L128">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

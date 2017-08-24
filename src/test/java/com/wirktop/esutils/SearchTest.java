@@ -1,6 +1,7 @@
 package com.wirktop.esutils;
 
 import com.wirktop.esutils.index.IndexBatch;
+import com.wirktop.esutils.search.Search;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.json.JSONObject;
@@ -19,56 +20,20 @@ import java.util.stream.Collectors;
 public class SearchTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
-    public void testInvalidNodes() throws Exception {
-        Search.transportBuilder()
-                .nodes(Arrays.asList("aaaa2229300"))
-                .index("i1")
-                .type("t1")
-                .clusterName("x")
-                .build();
-    }
-
-    @Test(expected = SearchException.class)
-    public void testInvalidHost() throws Exception {
-        Search.transportBuilder()
-                .node("blowup:9300")
-                .index("i1")
-                .type("t1")
-                .clusterName("x")
-                .build();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNoCluster() throws Exception {
-        Search.transportBuilder()
-                .node("aaa:300")
-                .index("i1")
-                .type("t1")
-                .build();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
-        Search.clientBuilder()
-                .client(client())
-                .type("t1")
-                .build();
+        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+                .search(null, "aaa");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoType() throws Exception {
-        Search.clientBuilder()
-                .client(client())
-                .index("i1")
-                .build();
+        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+                .search("aaa", null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoClient() throws Exception {
-        Search.clientBuilder()
-                .index("i1")
-                .type("t1")
-                .build();
+        new Search(null, "index", "type");
     }
 
     @Test
@@ -118,6 +83,37 @@ public class SearchTest extends TestBase {
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.scroll(QueryBuilders.matchAllQuery())
+                .collect(Collectors.toList());
+        Assert.assertEquals(docs.size(), docCount);
+    }
+
+    @Test
+    public void testSearchHits() throws Exception {
+        String index = "test-search-hits";
+        Search search = search(index, "type1");
+        int docCount = 573;
+        try (IndexBatch batch = search.indexer().batch()) {
+            generateDocuments(docCount, false)
+                    .forEach(batch::add);
+        }
+        waitForIndexedDocs(index, docCount);
+        List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery(), 128)
+                .collect(Collectors.toList());
+        Assert.assertEquals(docs.size(), docCount);
+    }
+
+
+    @Test
+    public void testSearchHitsDefaultPageSize() throws Exception {
+        String index = "test-search-hits";
+        Search search = search(index, "type1");
+        int docCount = 573;
+        try (IndexBatch batch = search.indexer().batch()) {
+            generateDocuments(docCount, false)
+                    .forEach(batch::add);
+        }
+        waitForIndexedDocs(index, docCount);
+        List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery())
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }

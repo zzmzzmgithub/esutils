@@ -1,6 +1,5 @@
-package com.wirktop.esutils.scroll;
+package com.wirktop.esutils.search;
 
-import com.wirktop.esutils.Search;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;

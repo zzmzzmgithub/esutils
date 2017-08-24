@@ -1,6 +1,6 @@
 package com.wirktop.esutils.index;
 
-import com.wirktop.esutils.Search;
+import com.wirktop.esutils.search.Search;
 import com.wirktop.esutils.SearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Search.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils.search</a> &gt; <span class="el_source">Search.java</span></div><h1>Search.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils.search;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirktop.esutils.SearchException;
+import com.wirktop.esutils.index.Indexer;
+import org.elasticsearch.action.get.GetRequestBuilder;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+/**
+ * @author Cosmin Marginean
+ */
+public class Search {
+
+<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(Search.class);</span>
+
+    private Client client;
+    private String index;
+    private String type;
+<span class="fc" id="L32">    private ObjectMapper objectMapper = new ObjectMapper();</span>
+    private Indexer indexer;
+
+<span class="fc" id="L35">    public Search(Client client, String index, String type) {</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (client == null) {</span>
+<span class="fc" id="L37">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (index == null) {</span>
+<span class="fc" id="L40">            throw new IllegalArgumentException(&quot;index argument cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (type == null) {</span>
+<span class="fc" id="L43">            throw new IllegalArgumentException(&quot;type argument cannot be null&quot;);</span>
+        }
+<span class="fc" id="L45">        this.client = client;</span>
+<span class="fc" id="L46">        this.index = index;</span>
+<span class="fc" id="L47">        this.type = type;</span>
+<span class="fc" id="L48">        this.indexer = new Indexer(this);</span>
+<span class="fc" id="L49">    }</span>
+
+    public JSONObject getJson(String id) {
+<span class="fc" id="L52">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L54">            return new JSONObject(response.getSourceAsString());</span>
+        }
+<span class="fc" id="L56">        return null;</span>
+    }
+
+    public Map&lt;String, Object&gt; getMap(String id) {
+<span class="fc" id="L60">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L62">            return response.getSourceAsMap();</span>
+        }
+<span class="fc" id="L64">        return null;</span>
+    }
+
+    public String getStr(String id) {
+<span class="fc" id="L68">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (response.isExists()) {</span>
+<span class="fc" id="L70">            return response.getSourceAsString();</span>
+        }
+<span class="fc" id="L72">        return null;</span>
+    }
+
+    public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
+        try {
+<span class="fc" id="L77">            GetResponse response = get(id);</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            if (response.isExists()) {</span>
+<span class="fc" id="L79">                return objectMapper.readValue(response.getSourceAsString(), docClass);</span>
+            }
+<span class="fc" id="L81">            return null;</span>
+<span class="nc" id="L82">        } catch (IOException e) {</span>
+<span class="nc" id="L83">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L84">            throw new SearchException(e.getMessage(), e);</span>
+        }
+    }
+
+    private GetResponse get(String id) {
+<span class="fc" id="L89">        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);</span>
+<span class="fc" id="L90">        return getRequest.execute().actionGet();</span>
+    }
+
+
+    public Indexer indexer() {
+<span class="fc" id="L95">        return indexer;</span>
+    }
+
+    public Client client() {
+<span class="fc" id="L99">        return client;</span>
+    }
+
+    public SearchRequestBuilder searchRequest() {
+<span class="fc" id="L103">        return client.prepareSearch(index()).setTypes(type());</span>
+    }
+
+    public Stream&lt;SearchHit&gt; scroll(QueryBuilder query) {
+<span class="fc" id="L107">        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L108">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; search(QueryBuilder query) {
+<span class="fc" id="L112">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; search(QueryBuilder query, int pageSize) {
+<span class="fc" id="L116">        SearchRequestBuilder request = searchRequest().setQuery(query);</span>
+<span class="fc" id="L117">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
+<span class="fc" id="L118">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    }
+
+    public String index() {
+<span class="fc" id="L122">        return index;</span>
+    }
+
+    public String type() {
+<span class="fc" id="L126">        return type;</span>
+    }
+
+    public ObjectMapper getObjectMapper() {
+<span class="fc" id="L130">        return objectMapper;</span>
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+<span class="nc" id="L134">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L135">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -12,28 +12,20 @@ Other considerations:
  
 ## Features
 ### High level concepts
-The design revolves around a `Search` component which offers some direct ES operations (get, search, etc), but it also aggregates sub-components like `Indexer` and
-`Admin` to attain _some_ separation of concerns but also to have some uniformity in the API and component dependencies.
+The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search`, `Admin` etc.
+The objective to have _some_ separation of concerns but also to have some uniformity in the API and component dependencies.
 
-For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type. This way each instance is somewhat isolated
-and makes for a cleaner client code. 
+For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type (mandatory params).
+This way each instance is somewhat isolated and makes for a cleaner client code. 
 
-### Builder pattern for client
+Example:
 ```
-    Search.builder()
-          .client(client())
-          .index(index)
-          .type(type)
-          .build();
-```
-Alternatively, you can pass the host details directly:
-```
-    Search.transportBuilder()
-          .node("host1:9300")
-          .node("host2:9300")
-          .index(index)
-          .type(type)
-          .build();
+Client client = ...
+ElasticSearchClient esClient1 = new ElasticSearchClient(client);
+ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost:9300"), "cluster-x");
+
+Search search = esClient1.search("index1", "type1");
+Indexer = search.indexer(); 
 ```
 
 ### Index documents
@@ -92,4 +84,10 @@ Map<String, Object> map = search.getMap(id);
 JSONObject json = search.getJson(id);
 String jsonDoc = search.getStr(id);
 TestPojo pojo = search.get(id, TestPojo.class);
+```
+
+### Templates
+```
+ElasticSearchClient client = new ElasticSearchClient(..);
+client.admin().createTemplate("mytemplate", "{...}");
 ```

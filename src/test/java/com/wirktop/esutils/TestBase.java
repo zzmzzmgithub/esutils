@@ -1,6 +1,7 @@
 package com.wirktop.esutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -8,19 +9,19 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.glassfish.jersey.client.ClientConfig;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Cosmin Marginean
@@ -112,20 +113,11 @@ public abstract class TestBase {
     }
 
     public Search search(String index, String type) {
-        return Search.clientBuilder()
-                .client(client())
-                .index(index)
-                .type(type)
-                .build();
+        return new ElasticSearchClient(client()).search(index, type);
     }
 
     public Search searchTcp(String index, String type) {
-        return Search.transportBuilder()
-                .node("localhost:9300")
-                .clusterName(CLUSTER)
-                .index(index)
-                .type(type)
-                .build();
+        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(index, type);
     }
 
     public List<JSONObject> generateDocuments(int count, boolean addError) throws IOException {
@@ -165,5 +157,10 @@ public abstract class TestBase {
                     .actionGet();
         } while (response.getHits().getTotalHits() < docCount);
         return response;
+    }
+
+    public Client httpClient() {
+        ClientConfig config = new ClientConfig();
+        return ClientBuilder.newClient(config);
     }
 }

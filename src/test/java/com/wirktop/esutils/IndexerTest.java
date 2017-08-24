@@ -2,6 +2,7 @@ package com.wirktop.esutils;
 
 import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.index.Indexer;
+import com.wirktop.esutils.search.Search;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.mapper.MapperParsingException;
 import org.json.JSONObject;

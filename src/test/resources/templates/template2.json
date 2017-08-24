@@ -1,0 +1,18 @@
+{
+    "template": "*capital*",
+    "mappings": {
+        "auditevent": {
+            "dynamic": false,
+            "date_detection": false,
+            "properties": {
+                "createdAt": {
+                    "type": "date",
+                    "format": "strict_date_time||strict_date_time_no_millis"
+                },
+                "eventType": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}

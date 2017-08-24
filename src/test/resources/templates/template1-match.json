@@ -1,0 +1,23 @@
+{
+    "mytemplate": {
+        "order": 0,
+        "template": "*audit*",
+        "settings": {},
+        "mappings": {
+            "auditevent": {
+                "dynamic": false,
+                "date_detection": false,
+                "properties": {
+                    "createdAt": {
+                        "format": "strict_date_time||strict_date_time_no_millis",
+                        "type": "date"
+                    },
+                    "eventType": {
+                        "type": "keyword"
+                    }
+                }
+            }
+        },
+        "aliases": {}
+    }
+}
