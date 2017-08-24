@@ -1,5 +1,7 @@
 # ElasticSearch Utils
 
+THIS IS WORK IN PROGRESS
+
 ## About
 **esutils** is a Java library that adds some fluency to the interaction with ElasticSeach in a Java environment. Please check the Features section for the complete set of functionalities.
 
