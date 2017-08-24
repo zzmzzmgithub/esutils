@@ -49,6 +49,7 @@ Index methods return the `_id` of the indexed document.
 * `Map<String,Object>`
 * `org.json.JSONObject`
 * `String` (a the JSON string for this document)
+* Any POJO (this would serialize it to JSON) 
 
 ### Bulk index documents
 ```
@@ -83,4 +84,12 @@ try (IndexBatch batch = indexer.batch(100)) {
 ```
 search.scroll(QueryBuilders.matchAllQuery())
                 .forEach((hit) -> {...});
+```
+
+### Get by ID
+```
+Map<String, Object> map = search.getMap(id);
+JSONObject json = search.getJson(id);
+String jsonDoc = search.getStr(id);
+TestPojo pojo = search.get(id, TestPojo.class);
 ```

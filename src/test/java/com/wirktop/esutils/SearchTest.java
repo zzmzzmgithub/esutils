@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +65,8 @@ public class SearchTest extends TestBase {
         Search search = search("test-get-json", "type1");
         JSONObject document = randomDoc();
         String id = search.indexer().index(document);
-        assertSame(search.getJson(id), document);
+        JSONObject json = search.getJson(id);
+        assertSame(json, document);
     }
 
     @Test
@@ -72,7 +74,8 @@ public class SearchTest extends TestBase {
         Search search = search("test-get-map", "type1");
         JSONObject document = randomDoc();
         String id = search.indexer().index(document);
-        assertSame(new JSONObject(search.getMap(id)), document);
+        Map<String, Object> map = search.getMap(id);
+        assertSame(new JSONObject(map), document);
     }
 
     @Test
@@ -80,15 +83,17 @@ public class SearchTest extends TestBase {
         Search search = search("test-get-str", "type1");
         JSONObject document = randomDoc();
         String id = search.indexer().index(document);
-        assertSame(new JSONObject(search.getStr(id)), document);
+        String jsonDoc = search.getStr(id);
+        assertSame(new JSONObject(jsonDoc), document);
     }
 
     @Test
     public void testGetPojo() throws Exception {
-        Search search = search("test-get-str", "type1");
+        Search search = search("test-get-pojo", "type1");
         JSONObject document = randomDoc();
-        String id = search.indexer().index(document);
-        assertSame(new JSONObject(search.getStr(id)), document);
+        String id = search.indexer().index(docAsPojo("pojo1.json", TestPojo.class));
+        TestPojo pojo = search.get(id, TestPojo.class);
+        assertSame(new JSONObject(pojo), document);
     }
 
     @Test
