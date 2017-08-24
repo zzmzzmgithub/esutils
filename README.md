@@ -1,7 +1,5 @@
 # ElasticSearch Utils
 
-THIS IS WORK IN PROGRESS
-
 ## About
 **esutils** is a Java library that adds some fluency to the interaction with ElasticSearch.
 * Unit tests use an actual ElasticSearch instance, starts/stops automatically on build (embedded is not supported anymore so we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
