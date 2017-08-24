@@ -5,7 +5,7 @@
 
 Other considerations:
 * Unit tests use an actual ElasticSearch instance (no unsupported embedded etc)
-* Decent code coverage: (check `etc/code-coverage/jacoco-ut/com.worktop.esutils.index/index.html`)
+* Decent code coverage: (check `etc/code-coverage/jacoco-ut/index.html`)
 * Small footprint
  
 ## Features
@@ -14,7 +14,7 @@ The design revolves around a `Search` component which offers some direct ES oper
 `Admin` to attain _some_ separation of concerns but also to have some uniformity in the API and component dependencies.
 
 For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type. This way each instance is somewhat isolated
-and helps structure client clode more cleanly. 
+and makes for a cleaner client code. 
 
 ### Builder pattern for client
 ```
