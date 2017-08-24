@@ -89,6 +89,14 @@ public abstract class TestBase {
         Assert.assertEquals(json1.toString(), json2.toString());
     }
 
+    protected void assertSamePojo1(Search search, TestPojo document, String newId) {
+        TestPojo stored = search.get(newId, TestPojo.class);
+        Assert.assertEquals(stored, document);
+        Assert.assertEquals(stored.getId(), "one");
+        Assert.assertEquals(stored.getName(), "John Smith");
+        Assert.assertEquals(stored.getAge(), 92);
+    }
+
     public void assertSame(JSONObject json1, Map<String, Object> map) throws IOException {
         assertSame(json1, new JSONObject(pojoToString(map)));
     }

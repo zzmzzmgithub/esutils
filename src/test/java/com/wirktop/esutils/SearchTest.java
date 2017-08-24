@@ -101,10 +101,10 @@ public class SearchTest extends TestBase {
     @Test
     public void testGetPojo() throws Exception {
         Search search = search("test-get-pojo", "type1");
-        JSONObject document = randomDoc();
-        String id = search.indexer().index(docAsPojo("pojo1.json", TestPojo.class));
-        TestPojo pojo = search.get(id, TestPojo.class);
-        assertSame(new JSONObject(pojoToString(pojo)), document);
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String id = search.indexer().index(document);
+        assertSamePojo1(search, document, id);
+        assertSame(new JSONObject(pojoToString(document)), new JSONObject(pojoToString(search.get(id, TestPojo.class))));
     }
 
     @Test

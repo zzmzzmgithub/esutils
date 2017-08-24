@@ -53,13 +53,6 @@ public class IndexerTest extends TestBase {
         assertSamePojo1(search, document, newId);
     }
 
-    private void assertSamePojo1(Search search, TestPojo document, String newId) {
-        TestPojo stored = search.get(newId, TestPojo.class);
-        Assert.assertEquals(stored, document);
-        Assert.assertEquals(stored.getId(), "one");
-        Assert.assertEquals(stored.getName(), "John Smith");
-        Assert.assertEquals(stored.getAge(), 92);
-    }
 
     @Test
     public void testIndexSimpleMap() throws Exception {
