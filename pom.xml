@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>ElasticSearch Java Utilities</name>
-    <description>esutils is a Java library that adds some fluency to the interaction with ElasticSeach from a Java environment.</description>
+    <description>esutils is a Java library that adds some fluency to the interaction with ElasticSearch.</description>
     <url>https://github.com/cosmin-marginean/esutils</url>
 
     <licenses>
