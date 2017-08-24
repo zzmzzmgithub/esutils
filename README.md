@@ -5,7 +5,7 @@
 
 Other considerations:
 * Unit tests use an actual ElasticSearch instance (no unsupported embedded etc)
-* Decent code coverage: (check `etc/code-coverage/jacoco-ut/index.html`)
+* Decent code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * Small footprint
  
 ## Features
