@@ -79,3 +79,8 @@ try (IndexBatch batch = indexer.batch(100)) {
 }
 
 ```
+### Scroll data
+```
+search.scroll(QueryBuilders.matchAllQuery())
+                .forEach((hit) -> {...});
+```
