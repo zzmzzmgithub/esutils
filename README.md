@@ -14,7 +14,7 @@ Other considerations:
 The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search`, `Admin` etc.
 The objective is to have _some_ separation of concerns, but to also have some uniformity in the API and component dependencies.
 
-For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type (mandatory params). This way each instance is logically isolated and makes for a cleaner client code. 
+For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type (mandatory params). This way each instance is logically isolated and makes for a cleaner client code. It also gives the API user more flexibility in deciding which components should be application state and which should be produced dynamically.
 
 Example:
 ```
