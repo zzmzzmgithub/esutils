@@ -117,8 +117,8 @@ public class Admin {
 <span class="fc" id="L117">        IndicesAliasesRequestBuilder req = client.admin()</span>
 <span class="fc" id="L118">                .indices()</span>
 <span class="fc" id="L119">                .prepareAliases();</span>
-<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (filter != null) {</span>
-<span class="nc" id="L121">            req = req.addAlias(indices, aliasName, filter);</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (filter != null) {</span>
+<span class="fc" id="L121">            req = req.addAlias(indices, aliasName, filter);</span>
         } else {
 <span class="fc" id="L123">            req = req.addAlias(indices, aliasName);</span>
         }
