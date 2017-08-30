@@ -50,35 +50,31 @@ public class Search {
 
     public JSONObject getJson(String id) {
         GetResponse response = get(id);
-        if (response.isExists()) {
-            return new JSONObject(response.getSourceAsString());
-        }
-        return null;
+        return response.isExists()
+                ? new JSONObject(response.getSourceAsString())
+                : null;
     }
 
     public Map<String, Object> getMap(String id) {
         GetResponse response = get(id);
-        if (response.isExists()) {
-            return response.getSourceAsMap();
-        }
-        return null;
+        return response.isExists()
+                ? response.getSourceAsMap()
+                : null;
     }
 
     public String getStr(String id) {
         GetResponse response = get(id);
-        if (response.isExists()) {
-            return response.getSourceAsString();
-        }
-        return null;
+        return response.isExists()
+                ? response.getSourceAsString()
+                : null;
     }
 
     public <T> T get(String id, Class<T> docClass) {
         try {
             GetResponse response = get(id);
-            if (response.isExists()) {
-                return objectMapper.readValue(response.getSourceAsString(), docClass);
-            }
-            return null;
+            return response.isExists()
+                    ? objectMapper.readValue(response.getSourceAsString(), docClass)
+                    : null;
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new SearchException(e.getMessage(), e);
