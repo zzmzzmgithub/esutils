@@ -35,8 +35,7 @@ ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost
 DataBucket dataBucket = new DataBucket("index1", "type1")
 dataBucket.createIndex(esClient1.admin());
 
-Search search = esClient1.search("index1", "type1");
-Search search2 = esClient1.search(dataBucket);
+Search search = esClient1.search(dataBucket);
 Indexer = search.indexer(); 
 ```
 
