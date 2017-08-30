@@ -1,7 +1,8 @@
 package com.wirktop.esutils.index;
 
-import com.wirktop.esutils.search.Search;
+import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.SearchException;
+import com.wirktop.esutils.search.Search;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -24,10 +25,8 @@ import java.util.stream.Collectors;
  */
 public class Indexer {
 
-    private static final Logger log = LoggerFactory.getLogger(Indexer.class);
-
     public static final int DEFAULT_BATCH_SIZE = 100;
-
+    private static final Logger log = LoggerFactory.getLogger(Indexer.class);
     private Search search;
 
     public Indexer(Search search) {
@@ -168,10 +167,14 @@ public class Indexer {
     }
 
     private IndexRequestBuilder prepareIndex() {
-        return search.client().prepareIndex(search.index(), search.type());
+        return search.client().prepareIndex(search.bucket().getIndex(), search.bucket().getType());
     }
 
     public Search search() {
         return search;
+    }
+
+    public DataBucket bucket() {
+        return search.bucket();
     }
 }

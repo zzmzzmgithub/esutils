@@ -11,10 +11,10 @@ import java.util.Map;
  */
 public class IndexBatch implements AutoCloseable {
 
-    private int size;
     protected Indexer indexer;
     protected String idField;
     protected List<Map<String, Object>> documents = new ArrayList<>();
+    private int size;
 
     public IndexBatch(Indexer indexer, int size, String idField) {
         this.indexer = indexer;

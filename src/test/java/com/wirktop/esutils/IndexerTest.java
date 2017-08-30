@@ -38,18 +38,6 @@ public class IndexerTest extends TestBase {
         indexer.index("asdasdsa", new TestPojoBroken(), false);
     }
 
-    public static class TestPojoBroken {
-        private Method m;
-
-        public Method getM() {
-            throw new RuntimeException("aa");
-        }
-
-        public void setM(Method m) {
-            this.m = m;
-        }
-    }
-
     @Test
     public void testIndexPojoId() throws Exception {
         Search search = search("index1", "type1");
@@ -74,14 +62,13 @@ public class IndexerTest extends TestBase {
         assertSamePojo1(search, document, newId);
     }
 
-
     @Test
     public void testIndexSimpleMap() throws Exception {
         Indexer indexer = search("index1", "type1").indexer();
         Map<String, Object> document = docAsMap("sample-doc-1.json");
         String newId = indexer.index(document);
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
     }
 
     @Test
@@ -90,7 +77,7 @@ public class IndexerTest extends TestBase {
         JSONObject document = docAsJson("sample-doc-1.json");
         String newId = indexer.index(document);
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
     }
 
     @Test
@@ -99,7 +86,7 @@ public class IndexerTest extends TestBase {
         JSONObject document = docAsJson("sample-doc-1.json");
         String newId = indexer.index(document.toString());
         System.out.println("Got ID: " + newId);
-        Assert.assertEquals(document.toString(), getString(indexer.search().index(), indexer.search().type(), newId));
+        Assert.assertEquals(document.toString(), getString(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
     }
 
     @Test
@@ -108,7 +95,7 @@ public class IndexerTest extends TestBase {
         Map<String, Object> document = docAsMap("sample-doc-1.json");
         String newId = indexer.index(null, document);
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
     }
 
     @Test
@@ -185,7 +172,6 @@ public class IndexerTest extends TestBase {
         testJsons(index, documents);
     }
 
-
     @Test(expected = SearchException.class)
     public void testBulkJsonsError() throws Exception {
         String index = "index-bulk-jsonerror";
@@ -194,7 +180,6 @@ public class IndexerTest extends TestBase {
         indexer.bulkIndexJson(documents);
     }
 
-
     @Test(expected = SearchException.class)
     public void testBulkJsonsError2() throws Exception {
         String index = "index-bulk-jsonerror2";
@@ -202,7 +187,6 @@ public class IndexerTest extends TestBase {
         List<JSONObject> documents = generateDocuments(25, true);
         indexer.bulkIndexJson(documents);
     }
-
 
     @Test(expected = SearchException.class)
     public void testBulkMapError() throws Exception {
@@ -265,7 +249,6 @@ public class IndexerTest extends TestBase {
             Assert.assertEquals(foundCount, 1);
         });
     }
-
 
     @Test
     public void testBulkMap2() throws Exception {
@@ -366,7 +349,7 @@ public class IndexerTest extends TestBase {
         Map<String, Object> document = docAsMap(docName);
         String newId = indexer.index(id, document, refresh);
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
         return newId;
     }
 
@@ -374,7 +357,7 @@ public class IndexerTest extends TestBase {
         JSONObject document = docAsJson(docName);
         String newId = indexer.index(id, document);
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
         return newId;
     }
 
@@ -382,7 +365,19 @@ public class IndexerTest extends TestBase {
         JSONObject document = docAsJson(docName);
         String newId = indexer.index(id, document.toString());
         System.out.println("Got ID: " + newId);
-        assertSame(document, getMap(indexer.search().index(), indexer.search().type(), newId));
+        assertSame(document, getMap(indexer.bucket().getIndex(), indexer.bucket().getType(), newId));
         return newId;
+    }
+
+    public static class TestPojoBroken {
+        private Method m;
+
+        public Method getM() {
+            throw new RuntimeException("aa");
+        }
+
+        public void setM(Method m) {
+            this.m = m;
+        }
     }
 }

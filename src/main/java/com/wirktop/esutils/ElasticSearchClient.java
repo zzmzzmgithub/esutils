@@ -26,7 +26,7 @@ public class ElasticSearchClient {
 
     /**
      * @param nodes       A collection of hostname:port elements
-     * @param clusterName Name of ES cluster
+     * @param clusterName Name of ElasticSearch cluster
      */
     public ElasticSearchClient(Collection<String> nodes, String clusterName) {
         this(transportClient(nodes, clusterName));
@@ -39,14 +39,6 @@ public class ElasticSearchClient {
 
         this.client = client;
         admin = new Admin(client);
-    }
-
-    public Search search(String index, String type) {
-        return new Search(client, index, type);
-    }
-
-    public Admin admin() {
-        return admin;
     }
 
     private static Client transportClient(Collection<String> nodes, String clusterName) {
@@ -72,5 +64,17 @@ public class ElasticSearchClient {
             log.error("Error creating Search component: " + e.getMessage(), e);
             throw new SearchException(e.getMessage(), e);
         }
+    }
+
+    public Search search(String index, String type) {
+        return search(new DataBucket(index, type));
+    }
+
+    public Search search(DataBucket bucket) {
+        return new Search(client, bucket);
+    }
+
+    public Admin admin() {
+        return admin;
     }
 }

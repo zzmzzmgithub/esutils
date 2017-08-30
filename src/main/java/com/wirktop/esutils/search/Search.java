@@ -1,6 +1,7 @@
 package com.wirktop.esutils.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.SearchException;
 import com.wirktop.esutils.index.Indexer;
 import org.elasticsearch.ElasticsearchException;
@@ -31,24 +32,19 @@ public class Search {
     private static final Logger log = LoggerFactory.getLogger(Search.class);
 
     private Client client;
-    private String index;
-    private String type;
+    private DataBucket bucket;
     private ObjectMapper objectMapper = new ObjectMapper();
     private Indexer indexer;
 
-    public Search(Client client, String index, String type) {
+    public Search(Client client, DataBucket bucket) {
         if (client == null) {
             throw new IllegalArgumentException("client argument cannot be null");
         }
-        if (index == null) {
-            throw new IllegalArgumentException("index argument cannot be null");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("type argument cannot be null");
+        if (bucket == null) {
+            throw new IllegalArgumentException("location argument cannot be null");
         }
         this.client = client;
-        this.index = index;
-        this.type = type;
+        this.bucket = bucket;
         this.indexer = new Indexer(this);
     }
 
@@ -90,7 +86,7 @@ public class Search {
     }
 
     private GetResponse get(String id) {
-        GetRequestBuilder getRequest = client.prepareGet(index(), type(), id);
+        GetRequestBuilder getRequest = client.prepareGet(bucket.getIndex(), bucket.getType(), id);
         return getRequest.execute().actionGet();
     }
 
@@ -132,7 +128,8 @@ public class Search {
     }
 
     protected SearchRequestBuilder searchRequest() {
-        return client.prepareSearch(index()).setTypes(type());
+        return client.prepareSearch(bucket.getIndex())
+                .setTypes(bucket.getType());
     }
 
     public Stream<SearchHit> scroll(QueryBuilder query) {
@@ -149,19 +146,15 @@ public class Search {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
-    public String index() {
-        return index;
-    }
-
-    public String type() {
-        return type;
-    }
-
     public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+    }
+
+    public DataBucket bucket() {
+        return bucket;
     }
 }

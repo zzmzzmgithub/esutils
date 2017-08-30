@@ -35,6 +35,12 @@ public class Admin {
         this.client = client;
     }
 
+    public static void checkResponse(AcknowledgedResponse response) {
+        if (!response.isAcknowledged()) {
+            throw new SearchException("Error executing Elasticsearch request");
+        }
+    }
+
     public void createTemplate(String templateName, String jsonContent) {
         try {
             PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);
@@ -86,11 +92,5 @@ public class Admin {
     public boolean indexExists(String index) {
         IndicesExistsResponse response = client.admin().indices().exists(new IndicesExistsRequest(index)).actionGet();
         return response.isExists();
-    }
-
-    public static void checkResponse(AcknowledgedResponse response) {
-        if (!response.isAcknowledged()) {
-            throw new SearchException("Error executing Elasticsearch request");
-        }
     }
 }

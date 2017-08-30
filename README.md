@@ -32,6 +32,7 @@ ElasticSearchClient esClient1 = new ElasticSearchClient(client);
 ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost:9300"), "cluster-x");
 
 Search search = esClient1.search("index1", "type1");
+Search search2 = esClient1.search(new DataBucket("index1", "type1"));
 Indexer = search.indexer(); 
 ```
 
@@ -43,10 +44,10 @@ search.indexer().index(document);
 search.indexer().index(id, document);
 search.indexer().index(id, document, true);
 ```
-You can optionally pass an `id` to specify an id to index with, and a `boolean` to wait for refresh (defaults to `false` when not specified).
-Index methods return the `_id` of the indexed document.
+You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
+The `index()` methods always return the `_id` of the newly indexed document.
 
-`document` can be one of the following:
+The `document` object can be one of the following:
 * `Map<String,Object>`
 * `org.json.JSONObject`
 * `String` (the JSON string for this document)
@@ -54,22 +55,15 @@ Index methods return the `_id` of the indexed document.
 
 #### Bulk index documents
 ```
-Collection<JSONObject> documents = ...
-search.indexer().bulkIndexJson(documents);
+Collection<JSONObject> jsonDocs = ...
+search.indexer().bulkIndexJson(jsonDocs);
+search.indexer().bulkIndexJson(jsonDocs, "myId"); // Pass an _id field to index with
 
 Collection<Map<String,Object> documentsMap = ...
-search.indexer().bulkIndex(documents);
+search.indexer().bulkIndex(documentsMap);
+search.indexer().bulkIndex(documentsMap, "myId"); // Pass an _id field to index with
 ```
-
-Additionally, you can specify a field that can be used as `_id` from either the `JSONObject` or the `Map` elements in the passed collection.
-```
-Collection<JSONObject> documents = ...
-search.indexer().bulkIndexJson(documents, "myId");
-
-Collection<Map<String,Object> documentsMap = ...
-search.indexer().bulkIndex(documents, "id");
-```
-The field is checked against each document and only applied when found and of type `String` (no error reported when inconsistent).
+Note: The id field is checked against each document and only applied when found and of type `String` (no error reported when inconsistent).
 
 #### Batch indexing
 This is a useful mechanism to index a `Stream` or any other potentially unbounded data set.
@@ -83,20 +77,16 @@ try (IndexBatch batch = indexer.batch(100)) {
 
 ## Searching
 https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/search/Search.html
-#### Search data
 ```
+// Search (ES _search)
 search.seach(QueryBuilders.matchAllQuery(), 10)
                 .forEach((hit) -> {...});
-```
-
-#### Scroll data
-```
+                
+// Scroll (ES _scroll)
 search.scroll(QueryBuilders.matchAllQuery())
                 .forEach((hit) -> {...});
-```
 
-#### Get by ID
-```
+// Seaveral get by _id methods
 Map<String, Object> map = search.getMap(id);
 JSONObject json = search.getJson(id);
 String jsonDoc = search.getStr(id);
@@ -105,15 +95,16 @@ TestPojo pojo = search.get(id, TestPojo.class);
 
 ## Admin
 https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/admin/Admin.html
-#### Indices
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
 Admin admin = client.admin();
+
+// Check index exists
 boolean x = admin.indexExists(index);
+
+// Create index
 admin.createIndex(index, numberOfShards);
-```
-#### Templates
-```
-ElasticSearchClient client = new ElasticSearchClient(..);
+
+// Create template
 client.admin().createTemplate("mytemplate", "{...}");
 ```

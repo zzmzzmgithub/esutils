@@ -30,9 +30,8 @@ import java.util.*;
 public abstract class TestBase {
 
     private static final String CLUSTER = "wirktop-esutils-test";
-
-    private static TransportClient client;
     protected static ObjectMapper objectMapper = new ObjectMapper();
+    private static TransportClient client;
 
     @BeforeClass
     public static void bootstrap() throws Exception {
@@ -48,6 +47,12 @@ public abstract class TestBase {
 
     public static TransportClient client() {
         return client;
+    }
+
+    public static String pojoToString(Object pojo) throws IOException {
+        StringWriter writer = new StringWriter();
+        objectMapper.writer().writeValue(writer, pojo);
+        return writer.toString();
     }
 
     protected Map<String, Object> getMap(String index, String type, String id) {
@@ -105,12 +110,6 @@ public abstract class TestBase {
 
     public void assertSame(Map<String, Object> map1, Map<String, Object> map2) throws IOException {
         assertSame(new JSONObject(pojoToString(map1)), new JSONObject(pojoToString(map2)));
-    }
-
-    public static String pojoToString(Object pojo) throws IOException {
-        StringWriter writer = new StringWriter();
-        objectMapper.writer().writeValue(writer, pojo);
-        return writer.toString();
     }
 
     public Search search(String index, String type) {

@@ -35,7 +35,7 @@ public class SearchTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoClient() throws Exception {
-        new Search(null, "index", "type");
+        new Search(null, null);
     }
 
     @Test
@@ -164,4 +164,30 @@ public class SearchTest extends TestBase {
         Assert.assertEquals(100, r1.getJSONObject("hits").getInt("total") + r2.getJSONObject("hits").getInt("total"));
     }
 
+    @Test
+    public void testCustomBucket() throws Exception {
+        Search search = esClient().search(new TenantBucket("private-tenant-index", "mytype", "tenant1"));
+        JSONObject document = randomDoc();
+        String id = search.indexer().index(document);
+        Map<String, Object> indexedDoc = getMap("tenant1---private-tenant-index", "mytype", id);
+        Assert.assertNotNull(indexedDoc);
+        assertSame(document, indexedDoc);
+    }
+
+    private static class TenantBucket extends DataBucket {
+
+        private String tenantId;
+
+        public TenantBucket(String index, String type, String tenantId) {
+            super(index, type);
+            this.tenantId = tenantId;
+        }
+
+        @Override
+        public String getIndex() {
+            String index = super.getIndex();
+            String prefix = tenantId + "---";
+            return index.startsWith(prefix) ? index : prefix + index;
+        }
+    }
 }
