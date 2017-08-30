@@ -1,10 +1,15 @@
-package com.wirktop.esutils.admin;
+package com.wirktop.esutils;
 
-import com.wirktop.esutils.SearchException;
 import org.apache.commons.io.IOUtils;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
+import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistResponse;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
@@ -12,14 +17,20 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateReque
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -64,7 +75,7 @@ public class Admin {
     }
 
     public void createIndex(String index) {
-        createIndex(index, -1);
+        createIndex(index, 0);
     }
 
     public void createIndex(String index, int shards) {
@@ -89,8 +100,74 @@ public class Admin {
         }
     }
 
+    public boolean aliasExists(String aliasName) {
+        AliasesExistResponse response = client.admin()
+                .indices()
+                .prepareAliasesExist(aliasName)
+                .execute()
+                .actionGet();
+        return response.exists();
+    }
+
+    public void createAlias(String aliasName, String... indices) {
+        createAlias(aliasName, null, indices);
+    }
+
+    public void createAlias(String aliasName, QueryBuilder filter, String... indices) {
+        IndicesAliasesRequestBuilder req = client.admin()
+                .indices()
+                .prepareAliases();
+        if (filter != null) {
+            req = req.addAlias(indices, aliasName, filter);
+        } else {
+            req = req.addAlias(indices, aliasName);
+        }
+        IndicesAliasesResponse response = req.execute().actionGet();
+        checkResponse(response);
+    }
+
+    public void removeAlias(String alias) {
+        GetAliasesRequest request = new GetAliasesRequest(alias);
+        GetAliasesResponse response = client.admin()
+                .indices()
+                .getAliases(request)
+                .actionGet();
+        ImmutableOpenMap<String, List<AliasMetaData>> aliases = response.getAliases();
+        if (!aliases.isEmpty()) {
+            String[] indices = aliases.keys().toArray(String.class);
+            IndicesAliasesResponse removeResponse = client.admin()
+                    .indices()
+                    .prepareAliases()
+                    .removeAlias(indices, alias)
+                    .execute().actionGet();
+            checkResponse(removeResponse);
+        }
+    }
+
+    public Collection<String> indexesForAlias(String alias) {
+        GetAliasesRequest r = new GetAliasesRequest(alias);
+        GetAliasesResponse response = client.admin()
+                .indices()
+                .getAliases(r)
+                .actionGet();
+        return Arrays.asList(response.getAliases().keys().toArray(String.class));
+    }
+
     public boolean indexExists(String index) {
-        IndicesExistsResponse response = client.admin().indices().exists(new IndicesExistsRequest(index)).actionGet();
-        return response.isExists();
+        IndicesExistsResponse response = client.admin()
+                .indices()
+                .prepareExists(index)
+                .execute()
+                .actionGet();
+        return response.isExists() && !aliasExists(index);
+    }
+
+    public void removeIndex(String index) {
+        DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);
+        DeleteIndexResponse response = client.admin()
+                .indices()
+                .delete(deleteRequest)
+                .actionGet();
+        checkResponse(response);
     }
 }

@@ -170,10 +170,6 @@ public class Indexer {
         return search.client().prepareIndex(search.bucket().getIndex(), search.bucket().getType());
     }
 
-    public Search search() {
-        return search;
-    }
-
     public DataBucket bucket() {
         return search.bucket();
     }

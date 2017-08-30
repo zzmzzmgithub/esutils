@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.SearchException;
 import com.wirktop.esutils.index.Indexer;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -41,7 +40,7 @@ public class Search {
             throw new IllegalArgumentException("client argument cannot be null");
         }
         if (bucket == null) {
-            throw new IllegalArgumentException("location argument cannot be null");
+            throw new IllegalArgumentException("bucket argument cannot be null");
         }
         this.client = client;
         this.bucket = bucket;
@@ -102,17 +101,12 @@ public class Search {
     }
 
     public long count(QueryBuilder filter) {
-        try {
-            SearchRequestBuilder builder = searchRequest().setSize(0);
-            if (filter != null) {
-                builder = builder.setPostFilter(filter);
-            }
-            SearchResponse response = builder.execute().actionGet();
-            return response.getHits().getTotalHits();
-        } catch (ElasticsearchException e) {
-            log.error(e.getMessage(), e);
-            throw new SearchException(e.getMessage(), e);
+        SearchRequestBuilder builder = searchRequest().setSize(0);
+        if (filter != null) {
+            builder = builder.setPostFilter(filter);
         }
+        SearchResponse response = builder.execute().actionGet();
+        return response.getHits().getTotalHits();
     }
 
     public Indexer indexer() {
@@ -123,7 +117,7 @@ public class Search {
         return client;
     }
 
-    protected SearchRequestBuilder searchRequest() {
+    public SearchRequestBuilder searchRequest() {
         return client.prepareSearch(bucket.getIndex())
                 .setTypes(bucket.getType());
     }

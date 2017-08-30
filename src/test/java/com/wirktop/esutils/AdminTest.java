@@ -1,9 +1,10 @@
 package com.wirktop.esutils;
 
-import com.wirktop.esutils.admin.Admin;
+import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequest;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,6 +54,19 @@ public class AdminTest extends TestBase {
     }
 
     @Test
+    public void testCreateIndexBucket() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+        String index = "createindextest-bucket";
+        Assert.assertFalse(admin.indexExists(index));
+        new DataBucket(index, "notype").createIndex(admin, 7);
+        Assert.assertTrue(admin.indexExists(index));
+
+        JSONObject json = new JSONObject(httpClient().target("http://localhost:9200/" + index).request().get().readEntity(String.class));
+        Assert.assertEquals(json.getJSONObject(index).getJSONObject("settings").getJSONObject("index").getString("number_of_shards"), "7");
+    }
+
+    @Test
     public void testCreateIndexDefaultShards() throws Exception {
         ElasticSearchClient client = new ElasticSearchClient(client());
         Admin admin = client.admin();
@@ -79,5 +93,36 @@ public class AdminTest extends TestBase {
 
         JSONObject json = new JSONObject(httpClient().target("http://localhost:9200/" + index).request().get().readEntity(String.class));
         Assert.assertEquals(json.getJSONObject(index).getJSONObject("settings").getJSONObject("index").getString("number_of_shards"), "5");
+    }
+
+    @Test
+    public void testRemoveIndex() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+        String index = "test-remove-index";
+        admin.createIndex(index);
+        Assert.assertTrue(admin.indexExists(index));
+        admin.removeIndex(index);
+        Assert.assertFalse(admin.indexExists(index));
+    }
+
+    @Test
+    public void testCreateAliasWithFilter() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+        esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
+        String index = "testcreatealiaswithfilter";
+        admin.createIndex(index);
+        Search search = client.search(new DataBucket(index, "type"));
+        indexStructuredDocs(100, search);
+        waitForIndexedDocs(index, 100);
+        admin.createAlias("males-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "male"), index);
+        admin.createAlias("females-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "female"), index);
+
+        long males = client.search(new DataBucket("males-testcreatealiaswithfilter", "type")).count();
+        long females = client.search(new DataBucket("females-testcreatealiaswithfilter", "type")).count();
+        Assert.assertTrue(males > 0);
+        Assert.assertTrue(females > 0);
+        Assert.assertEquals(100, females + males);
     }
 }

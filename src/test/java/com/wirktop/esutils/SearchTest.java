@@ -1,5 +1,7 @@
 package com.wirktop.esutils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -10,6 +12,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -22,15 +25,21 @@ import java.util.stream.Collectors;
 public class SearchTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
+    public void testNoBucket() throws Exception {
+        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+                .search(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(null, "aaa");
+                .search(new DataBucket(null, "aaa"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoType() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search("aaa", null);
+                .search(new DataBucket("aaa", null));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -172,6 +181,50 @@ public class SearchTest extends TestBase {
         Map<String, Object> indexedDoc = getMap("tenant1---private-tenant-index", "mytype", id);
         Assert.assertNotNull(indexedDoc);
         assertSame(document, indexedDoc);
+    }
+
+    @Test(expected = SearchException.class)
+    public void testFailDeserialize() throws Exception {
+        Search search = esClient().search(new DataBucket("test-fail-deserialize", "typemapped"));
+        search.indexer().index("a", randomDoc());
+        search.get("a", PojoSerialize.class);
+    }
+
+    @Test
+    public void testCustomObjectMapper() throws Exception {
+        Search search = esClient().search(new DataBucket("test-custom-object-mapper", "typemapped"));
+        PojoSerialize pojo = new PojoSerialize();
+        Instant time = pojo.getTime();
+        String id = search.indexer().index(pojo);
+        JSONObject defaultSerialized = search.getJson(id);
+        Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("nano"), time.getNano());
+        Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("epochSecond"), time.getEpochSecond());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Instant.class, new InstantSerializer());
+        module.addDeserializer(Instant.class, new InstantDeserializer());
+        objectMapper.registerModule(module);
+
+        Search search2 = esClient().search(new DataBucket("test-custom-object-mapper2", "typemapped"));
+        search2.setObjectMapper(objectMapper);
+        String newId = search2.indexer().index(pojo);
+        String str = search2.getStr(newId);
+        Assert.assertEquals("{\"time\":\"" + time.toString() + "\"}", str);
+        Assert.assertEquals(time, search2.get(newId, PojoSerialize.class).getTime());
+        Assert.assertEquals(time.toString(), search2.getJson(newId).getString("time"));
+    }
+
+    public static final class PojoSerialize {
+        private Instant time = Instant.now();
+
+        public Instant getTime() {
+            return time;
+        }
+
+        public void setTime(Instant time) {
+            this.time = time;
+        }
     }
 
     private static class TenantBucket extends DataBucket {

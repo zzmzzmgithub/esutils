@@ -113,7 +113,7 @@ public abstract class TestBase {
     }
 
     public Search search(String index, String type) {
-        return esClient().search(index, type);
+        return esClient().search(new DataBucket(index, type));
     }
 
     public ElasticSearchClient esClient() {
@@ -121,7 +121,7 @@ public abstract class TestBase {
     }
 
     public Search searchTcp(String index, String type) {
-        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(index, type);
+        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(new DataBucket(index, type));
     }
 
     public List<JSONObject> generateDocuments(int count, boolean addError) throws IOException {

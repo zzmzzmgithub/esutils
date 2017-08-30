@@ -1,6 +1,5 @@
 package com.wirktop.esutils;
 
-import com.wirktop.esutils.admin.Admin;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -30,6 +29,10 @@ public class ElasticSearchClient {
      */
     public ElasticSearchClient(Collection<String> nodes, String clusterName) {
         this(transportClient(nodes, clusterName));
+    }
+
+    public AliasWrappedBucket aliasWrapped(DataBucket dataBucket) {
+        return new AliasWrappedBucket(dataBucket.getIndex(), dataBucket.getType(), admin);
     }
 
     public ElasticSearchClient(Client client) {
@@ -64,10 +67,6 @@ public class ElasticSearchClient {
             log.error("Error creating Search component: " + e.getMessage(), e);
             throw new SearchException(e.getMessage(), e);
         }
-    }
-
-    public Search search(String index, String type) {
-        return search(new DataBucket(index, type));
     }
 
     public Search search(DataBucket bucket) {
