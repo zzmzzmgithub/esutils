@@ -78,7 +78,7 @@ public class SearchTest extends TestBase {
     public void testScrollHits() throws Exception {
         String index = "test-scroll-hits";
         Search search = search(index, "type1");
-        int docCount = 573;
+        int docCount = 267;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
                     .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
@@ -89,12 +89,66 @@ public class SearchTest extends TestBase {
         Assert.assertEquals(docs.size(), docCount);
     }
 
+    @Test
+    public void testScrollPojo() throws Exception {
+        String index = "test-scroll-pojo";
+        Search search = search(index, "type1");
+        int docCount = 194;
+        indexStructuredDocs(docCount, search);
+        waitForIndexedDocs(index, docCount);
+        List<Person> docs = search.scroll(QueryBuilders.matchAllQuery(), Person.class)
+                .collect(Collectors.toList());
+        Assert.assertEquals(docs.size(), docCount);
+    }
+
+    @Test
+    public void testSearchPojo() throws Exception {
+        String index = "test-search-pojo";
+        Search search = search(index, "type1");
+        int docCount = 243;
+        indexStructuredDocs(docCount, search);
+        waitForIndexedDocs(index, docCount);
+        List<Person> docs = search.search(QueryBuilders.matchAllQuery(), Person.class)
+                .collect(Collectors.toList());
+        Assert.assertEquals(docs.size(), docCount);
+    }
+
+    private static final class Person {
+        private String name;
+        private int age;
+        private String gender;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public String getGender() {
+            return gender;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
+        }
+    }
+
 
     @Test
     public void testScrollNoFilter() throws Exception {
         String index = "test-scroll-nofilter";
         Search search = search(index, "type1");
-        int docCount = 573;
+        int docCount = 215;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
                     .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
@@ -109,7 +163,7 @@ public class SearchTest extends TestBase {
     public void testSearchHits() throws Exception {
         String index = "test-search-hits";
         Search search = search(index, "type1");
-        int docCount = 573;
+        int docCount = 119;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
                     .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
@@ -125,7 +179,7 @@ public class SearchTest extends TestBase {
     public void testSearchHitsDefaultPageSize() throws Exception {
         String index = "test-search-hits";
         Search search = search(index, "type1");
-        int docCount = 573;
+        int docCount = 361;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
                     .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));

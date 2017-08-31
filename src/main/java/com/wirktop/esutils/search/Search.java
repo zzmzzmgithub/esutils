@@ -9,8 +9,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -101,8 +99,17 @@ public class Search {
                 .setTypes(bucket.getType());
     }
 
+    public <T> Stream<T> scroll(Class<T> pojoClass) {
+        return scroll(null, pojoClass);
+    }
+
     public Stream<SearchHit> scroll() {
-        return scroll(null);
+        return scroll((QueryBuilder) null);
+    }
+
+    public <T> Stream<T> scroll(QueryBuilder query, Class<T> pojoClass) {
+        return scroll(query)
+                .map((hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass));
     }
 
     public Stream<SearchHit> scroll(QueryBuilder query) {
@@ -114,6 +121,15 @@ public class Search {
         SearchRequestBuilder request = esClient.getClient().prepareSearch(index);
         ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
+    }
+
+    public <T> Stream<T> search(Class<T> pojoClass) {
+        return search(null, pojoClass);
+    }
+
+    public <T> Stream<T> search(QueryBuilder query, Class<T> pojoClass) {
+        return search(query)
+                .map((hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass));
     }
 
     public Stream<SearchHit> search(QueryBuilder query) {

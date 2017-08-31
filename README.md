@@ -15,7 +15,7 @@
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.1.3</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
@@ -30,6 +30,7 @@ can then be implemented by extending this class. One example is `AliasWrappedBuc
 This gives the API user more flexibility in deciding which components should be application state and which can be produced dynamically.
 
 ## Creating a client instance
+You can pass either an instance of `org.elasticsearch.client.Client` or, alternatively, a list of hostname:port tuples and a cluster name. 
 ```
 org.elasticsearch.client.Client client = ...
 ElasticSearchClient esClient1 = new ElasticSearchClient(client);
