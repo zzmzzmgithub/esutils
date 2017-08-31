@@ -7,7 +7,7 @@ ElasticSearch Java Utilities,com.wirktop.esutils.search,SearchIterator,5,102,2,6
 ElasticSearch Java Utilities,com.wirktop.esutils,Document,0,15,0,0,0,6,0,3,0,3
 ElasticSearch Java Utilities,com.wirktop.esutils,SearchException,4,5,0,0,2,2,1,1,1,1
 ElasticSearch Java Utilities,com.wirktop.esutils,AliasWrappedBucket,6,160,7,9,2,32,6,7,0,5
-ElasticSearch Java Utilities,com.wirktop.esutils,Admin,75,350,8,16,8,120,6,26,0,20
+ElasticSearch Java Utilities,com.wirktop.esutils,Admin,75,350,8,16,8,118,6,26,0,20
 ElasticSearch Java Utilities,com.wirktop.esutils,Json,0,55,0,0,0,14,0,4,0,4
 ElasticSearch Java Utilities,com.wirktop.esutils,DataBucket,0,40,0,4,0,14,0,7,0,5
 ElasticSearch Java Utilities,com.wirktop.esutils,ElasticSearchClient,0,154,0,8,0,33,0,13,0,9
