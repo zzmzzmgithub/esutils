@@ -11,7 +11,7 @@
 
     <name>ElasticSearch Java Utilities</name>
     <description>esutils is a Java library that adds some fluency to the interaction with ElasticSearch.</description>
-    <url>https://github.com/cosmin-marginean/esutils</url>
+    <url>https://github.com/wirktop/esutils</url>
 
     <licenses>
         <license>
@@ -25,14 +25,14 @@
             <name>Cosmin Marginean</name>
             <email>cos.marginean@gmail.com</email>
             <organization>Wirktop</organization>
-            <organizationUrl>https://github.com/cosmin-marginean</organizationUrl>
+            <organizationUrl>https://github.com/wirktop</organizationUrl>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/cosmin-marginean/esutils.git</connection>
-        <developerConnection>scm:git:ssh://github.com/cosmin-marginean/esutils.git</developerConnection>
-        <url>https://github.com/cosmin-marginean/esutils</url>
+        <connection>scm:git:git://github.com/wirktop/esutils.git</connection>
+        <developerConnection>scm:git:ssh://github.com/wirktop/esutils.git</developerConnection>
+        <url>https://github.com/wirktop/esutils</url>
     </scm>
 
     <distributionManagement>

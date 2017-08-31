@@ -2,8 +2,8 @@
 
 ## About
 **esutils** is a Java library that aims to make interaction with ElasticSearch a bit more fluent.
-* Javadocs: https://cosmin-marginean.github.io/esutils/etc/javadoc/ 
-* Code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
+* Javadocs: https://wirktop.github.io/esutils/etc/javadoc/ 
+* Code coverage: https://wirktop.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 ##### Other considerations
@@ -25,7 +25,7 @@ The objective is to have _some_ separation of concerns, but also a certain fluen
 
 For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
 a `DataBucket` parameter. A `DataBucket` is a "pointer" to an (index,type) tuple. Custom functionality and naming overrides 
-can then be implemented by extending this class. One example is `AliasWrappedBucket` (more on that here https://github.com/cosmin-marginean/esutils/wiki/AliasWrappedBucket).
+can then be implemented by extending this class. One example is `AliasWrappedBucket` (more on that here https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
 
 This gives the API user more flexibility in deciding which components should be application state and which can be produced dynamically.
 
@@ -48,7 +48,7 @@ Search search = esClient.search(dataBucket);
 ```
 
 ## Indexing
-https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/index/Indexer.html
+https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
 search.indexer().index(document);
@@ -87,7 +87,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 ```
 
 ## Searching
-https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/search/Search.html
+https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/search/Search.html
 ```
 // Search (ES _search)
 search.seach(QueryBuilders.matchAllQuery(), 10)
@@ -105,7 +105,7 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
-https://cosmin-marginean.github.io/esutils/etc/javadoc/com/wirktop/esutils/admin/Admin.html
+https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/admin/Admin.html
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
 Admin admin = client.admin();
