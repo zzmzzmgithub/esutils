@@ -23,20 +23,26 @@
 The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search`, `Admin` etc.
 The objective is to have _some_ separation of concerns, but to also have some uniformity in the API and component dependencies.
 
-For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type (mandatory params). This way each instance is logically isolated and makes for a cleaner client code. It also gives the API user more flexibility in deciding which components should be application state and which should be produced dynamically.
+For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
+a `DataBucket` parameter. A `DataBucket` is a "pointer" to an (index,type) tuple. Custom functionality and naming conventions 
+can then be implemented by extending this class. One example is `AliasWrappedBucket` (more on that below).
 
-Example:
+This way each instance is logically isolated and makes for a cleaner client code. It also gives the API user more flexibility in deciding 
+which components should be application state and which can be produced dynamically.
+
+## Creating a client instance
 ```
-Client client = ...
+org.elasticsearch.client.Client client = ...
 ElasticSearchClient esClient1 = new ElasticSearchClient(client);
 ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost:9300"), "cluster-x");
+```
 
-// Data bucket is container for "pointing" to an (index,type) tuple
+## Create a `Search` instance
+```
+ElasticSearchClient esClient = ...
 DataBucket dataBucket = new DataBucket("index1", "type1")
-dataBucket.createIndex(esClient1.admin());
-
-Search search = esClient1.search(dataBucket);
-Indexer = search.indexer(); 
+esClient.admin().createIndex(dataBucket); // Option to create index by passing a DataBucket - the recommended approach
+Search search = esClient.search(dataBucket); 
 ```
 
 ## Indexing

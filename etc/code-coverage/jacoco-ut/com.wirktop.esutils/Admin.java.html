@@ -74,101 +74,117 @@ public class Admin {
 <span class="fc" id="L74">        }</span>
 <span class="fc" id="L75">    }</span>
 
-    public void createIndex(String index) {
-<span class="fc" id="L78">        createIndex(index, 0);</span>
+    public void createIndex(DataBucket dataBucket) {
+<span class="fc" id="L78">        dataBucket.createIndex(this);</span>
 <span class="fc" id="L79">    }</span>
 
+    public void createIndex(DataBucket dataBucket, int shards) {
+<span class="nc" id="L82">        dataBucket.createIndex(this, shards);</span>
+<span class="nc" id="L83">    }</span>
+
+    public void wipe(AliasWrappedBucket dataBucket) {
+<span class="fc" id="L86">        dataBucket.wipe(this, 0);</span>
+<span class="fc" id="L87">    }</span>
+
+    public void wipe(AliasWrappedBucket dataBucket, int shards) {
+<span class="nc" id="L90">        dataBucket.wipe(this, shards);</span>
+<span class="nc" id="L91">    }</span>
+
+    public void createIndex(String index) {
+<span class="fc" id="L94">        createIndex(index, 0);</span>
+<span class="fc" id="L95">    }</span>
+
     public void createIndex(String index, int shards) {
-<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (!indexExists(index)) {</span>
-<span class="fc" id="L83">            CreateIndexRequest request = new CreateIndexRequest(index);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (!indexExists(index)) {</span>
+<span class="fc" id="L99">            CreateIndexRequest request = new CreateIndexRequest(index);</span>
 
-<span class="fc bfc" id="L85" title="All 2 branches covered.">            if (shards &gt; 0) {</span>
-<span class="fc" id="L86">                Settings.Builder settings = Settings.builder()</span>
-<span class="fc" id="L87">                        .put(&quot;index.number_of_shards&quot;, shards);</span>
-<span class="fc" id="L88">                request = request.settings(settings);</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            if (shards &gt; 0) {</span>
+<span class="fc" id="L102">                Settings.Builder settings = Settings.builder()</span>
+<span class="fc" id="L103">                        .put(&quot;index.number_of_shards&quot;, shards);</span>
+<span class="fc" id="L104">                request = request.settings(settings);</span>
             }
 
-<span class="fc" id="L91">            CreateIndexResponse response = client.admin().indices().create(request).actionGet();</span>
-<span class="fc" id="L92">            checkResponse(response);</span>
-<span class="fc" id="L93">            final RefreshResponse refresh = client.admin().indices().prepareRefresh(index).execute().actionGet();</span>
-<span class="pc bpc" id="L94" title="1 of 2 branches missed.">            if (refresh.getSuccessfulShards() &lt; 1) {</span>
-<span class="nc" id="L95">                throw new SearchException(String.format(&quot;Index fail in %s shards.&quot;, refresh.getFailedShards()));</span>
+<span class="fc" id="L107">            CreateIndexResponse response = client.admin().indices().create(request).actionGet();</span>
+<span class="fc" id="L108">            checkResponse(response);</span>
+<span class="fc" id="L109">            final RefreshResponse refresh = client.admin().indices().prepareRefresh(index).execute().actionGet();</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">            if (refresh.getSuccessfulShards() &lt; 1) {</span>
+<span class="nc" id="L111">                throw new SearchException(String.format(&quot;Index fail in %s shards.&quot;, refresh.getFailedShards()));</span>
             }
-<span class="fc" id="L97">            log.info(&quot;Created index: {}&quot;, index);</span>
-<span class="fc" id="L98">        } else {</span>
-<span class="fc" id="L99">            log.info(&quot;Index {} already exists. Skipping&quot;, index);</span>
+<span class="fc" id="L113">            log.info(&quot;Created index: {}&quot;, index);</span>
+<span class="fc" id="L114">        } else {</span>
+<span class="fc" id="L115">            log.info(&quot;Index {} already exists. Skipping&quot;, index);</span>
         }
-<span class="fc" id="L101">    }</span>
+<span class="fc" id="L117">    }</span>
 
     public boolean aliasExists(String aliasName) {
-<span class="fc" id="L104">        AliasesExistResponse response = client.admin()</span>
-<span class="fc" id="L105">                .indices()</span>
-<span class="fc" id="L106">                .prepareAliasesExist(aliasName)</span>
-<span class="fc" id="L107">                .execute()</span>
-<span class="fc" id="L108">                .actionGet();</span>
-<span class="fc" id="L109">        return response.exists();</span>
+<span class="fc" id="L120">        AliasesExistResponse response = client.admin()</span>
+<span class="fc" id="L121">                .indices()</span>
+<span class="fc" id="L122">                .prepareAliasesExist(aliasName)</span>
+<span class="fc" id="L123">                .execute()</span>
+<span class="fc" id="L124">                .actionGet();</span>
+<span class="fc" id="L125">        return response.exists();</span>
     }
 
     public void createAlias(String aliasName, String... indices) {
-<span class="fc" id="L113">        createAlias(aliasName, null, indices);</span>
-<span class="fc" id="L114">    }</span>
+<span class="fc" id="L129">        createAlias(aliasName, null, indices);</span>
+<span class="fc" id="L130">    }</span>
 
     public void createAlias(String aliasName, QueryBuilder filter, String... indices) {
-<span class="fc" id="L117">        IndicesAliasesRequestBuilder req = client.admin()</span>
-<span class="fc" id="L118">                .indices()</span>
-<span class="fc" id="L119">                .prepareAliases();</span>
-<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (filter != null) {</span>
-<span class="fc" id="L121">            req = req.addAlias(indices, aliasName, filter);</span>
+<span class="fc" id="L133">        IndicesAliasesRequestBuilder req = client.admin()</span>
+<span class="fc" id="L134">                .indices()</span>
+<span class="fc" id="L135">                .prepareAliases();</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (filter != null) {</span>
+<span class="fc" id="L137">            req = req.addAlias(indices, aliasName, filter);</span>
         } else {
-<span class="fc" id="L123">            req = req.addAlias(indices, aliasName);</span>
+<span class="fc" id="L139">            req = req.addAlias(indices, aliasName);</span>
         }
-<span class="fc" id="L125">        IndicesAliasesResponse response = req.execute().actionGet();</span>
-<span class="fc" id="L126">        checkResponse(response);</span>
-<span class="fc" id="L127">    }</span>
+<span class="fc" id="L141">        IndicesAliasesResponse response = req.execute().actionGet();</span>
+<span class="fc" id="L142">        checkResponse(response);</span>
+<span class="fc" id="L143">    }</span>
 
     public void removeAlias(String alias) {
-<span class="fc" id="L130">        GetAliasesRequest request = new GetAliasesRequest(alias);</span>
-<span class="fc" id="L131">        GetAliasesResponse response = client.admin()</span>
-<span class="fc" id="L132">                .indices()</span>
-<span class="fc" id="L133">                .getAliases(request)</span>
-<span class="fc" id="L134">                .actionGet();</span>
-<span class="fc" id="L135">        ImmutableOpenMap&lt;String, List&lt;AliasMetaData&gt;&gt; aliases = response.getAliases();</span>
-<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (!aliases.isEmpty()) {</span>
-<span class="fc" id="L137">            String[] indices = aliases.keys().toArray(String.class);</span>
-<span class="fc" id="L138">            IndicesAliasesResponse removeResponse = client.admin()</span>
-<span class="fc" id="L139">                    .indices()</span>
-<span class="fc" id="L140">                    .prepareAliases()</span>
-<span class="fc" id="L141">                    .removeAlias(indices, alias)</span>
-<span class="fc" id="L142">                    .execute().actionGet();</span>
-<span class="fc" id="L143">            checkResponse(removeResponse);</span>
+<span class="fc" id="L146">        GetAliasesRequest request = new GetAliasesRequest(alias);</span>
+<span class="fc" id="L147">        GetAliasesResponse response = client.admin()</span>
+<span class="fc" id="L148">                .indices()</span>
+<span class="fc" id="L149">                .getAliases(request)</span>
+<span class="fc" id="L150">                .actionGet();</span>
+<span class="fc" id="L151">        ImmutableOpenMap&lt;String, List&lt;AliasMetaData&gt;&gt; aliases = response.getAliases();</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (!aliases.isEmpty()) {</span>
+<span class="fc" id="L153">            String[] indices = aliases.keys().toArray(String.class);</span>
+<span class="fc" id="L154">            IndicesAliasesResponse removeResponse = client.admin()</span>
+<span class="fc" id="L155">                    .indices()</span>
+<span class="fc" id="L156">                    .prepareAliases()</span>
+<span class="fc" id="L157">                    .removeAlias(indices, alias)</span>
+<span class="fc" id="L158">                    .execute().actionGet();</span>
+<span class="fc" id="L159">            checkResponse(removeResponse);</span>
         }
-<span class="fc" id="L145">    }</span>
+<span class="fc" id="L161">    }</span>
 
     public Collection&lt;String&gt; indexesForAlias(String alias) {
-<span class="fc" id="L148">        GetAliasesRequest r = new GetAliasesRequest(alias);</span>
-<span class="fc" id="L149">        GetAliasesResponse response = client.admin()</span>
-<span class="fc" id="L150">                .indices()</span>
-<span class="fc" id="L151">                .getAliases(r)</span>
-<span class="fc" id="L152">                .actionGet();</span>
-<span class="fc" id="L153">        return Arrays.asList(response.getAliases().keys().toArray(String.class));</span>
+<span class="fc" id="L164">        GetAliasesRequest r = new GetAliasesRequest(alias);</span>
+<span class="fc" id="L165">        GetAliasesResponse response = client.admin()</span>
+<span class="fc" id="L166">                .indices()</span>
+<span class="fc" id="L167">                .getAliases(r)</span>
+<span class="fc" id="L168">                .actionGet();</span>
+<span class="fc" id="L169">        return Arrays.asList(response.getAliases().keys().toArray(String.class));</span>
     }
 
     public boolean indexExists(String index) {
-<span class="fc" id="L157">        IndicesExistsResponse response = client.admin()</span>
-<span class="fc" id="L158">                .indices()</span>
-<span class="fc" id="L159">                .prepareExists(index)</span>
-<span class="fc" id="L160">                .execute()</span>
-<span class="fc" id="L161">                .actionGet();</span>
-<span class="fc bfc" id="L162" title="All 4 branches covered.">        return response.isExists() &amp;&amp; !aliasExists(index);</span>
+<span class="fc" id="L173">        IndicesExistsResponse response = client.admin()</span>
+<span class="fc" id="L174">                .indices()</span>
+<span class="fc" id="L175">                .prepareExists(index)</span>
+<span class="fc" id="L176">                .execute()</span>
+<span class="fc" id="L177">                .actionGet();</span>
+<span class="fc bfc" id="L178" title="All 4 branches covered.">        return response.isExists() &amp;&amp; !aliasExists(index);</span>
     }
 
     public void removeIndex(String index) {
-<span class="fc" id="L166">        DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);</span>
-<span class="fc" id="L167">        DeleteIndexResponse response = client.admin()</span>
-<span class="fc" id="L168">                .indices()</span>
-<span class="fc" id="L169">                .delete(deleteRequest)</span>
-<span class="fc" id="L170">                .actionGet();</span>
-<span class="fc" id="L171">        checkResponse(response);</span>
-<span class="fc" id="L172">    }</span>
+<span class="fc" id="L182">        DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);</span>
+<span class="fc" id="L183">        DeleteIndexResponse response = client.admin()</span>
+<span class="fc" id="L184">                .indices()</span>
+<span class="fc" id="L185">                .delete(deleteRequest)</span>
+<span class="fc" id="L186">                .actionGet();</span>
+<span class="fc" id="L187">        checkResponse(response);</span>
+<span class="fc" id="L188">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
