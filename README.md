@@ -60,8 +60,8 @@ search.indexer().index(id, document, true);
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
 The `index()` methods always return the `_id` of the newly indexed document.
 
-Certain index methods accept a [[https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Document.html|Document]] instance which is a simple container for both an ID and the content of the document.
-For bulk indexing this is particularly important, where passing an ID for each document might be required.
+Certain index methods accept a [https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Document.html](Document) instance which is a simple container 
+for both an ID and the content of the document. For bulk indexing this is particularly important, where passing an ID for each document might be required.
 
 #### Bulk index documents
 ```
