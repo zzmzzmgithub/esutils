@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Admin.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils</a> &gt; <span class="el_source">Admin.java</span></div><h1>Admin.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils;
 
-import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
@@ -14,208 +13,261 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author Cosmin Marginean
  */
 public class Admin {
 
-<span class="fc" id="L42">    private static final Logger log = LoggerFactory.getLogger(Admin.class);</span>
+<span class="fc" id="L46">    private static final Logger log = LoggerFactory.getLogger(Admin.class);</span>
     private static final String ANYTYPE = &quot;ANYTYPE&quot;;
+    public static final String INDEX_NUMBER_OF_SHARDS = &quot;index.number_of_shards&quot;;
+    public static final int DATA_COPY_BATCH_SIZE = 100;
 
     private ElasticSearchClient esClient;
 
-<span class="fc" id="L47">    public Admin(ElasticSearchClient esClient) {</span>
-<span class="fc" id="L48">        this.esClient = esClient;</span>
-<span class="fc" id="L49">    }</span>
-
-    public static void checkResponse(AcknowledgedResponse response) {
-<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if (!response.isAcknowledged()) {</span>
-<span class="nc" id="L53">            throw new SearchException(&quot;Error executing Elasticsearch request&quot;);</span>
-        }
+<span class="fc" id="L53">    public Admin(ElasticSearchClient esClient) {</span>
+<span class="fc" id="L54">        this.esClient = esClient;</span>
 <span class="fc" id="L55">    }</span>
 
     public void createTemplate(String templateName, String jsonContent) {
-        try {
-<span class="fc" id="L59">            PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);</span>
-<span class="fc" id="L60">            PutIndexTemplateResponse response = esClient.getClient().admin()</span>
-<span class="fc" id="L61">                    .indices()</span>
-<span class="fc" id="L62">                    .execute(PutIndexTemplateAction.INSTANCE, request)</span>
-<span class="fc" id="L63">                    .get();</span>
-<span class="fc" id="L64">            checkResponse(response);</span>
-<span class="fc" id="L65">            log.info(&quot;Created template {}&quot;, templateName);</span>
-<span class="nc" id="L66">        } catch (InterruptedException | ExecutionException e) {</span>
-<span class="nc" id="L67">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L68">            throw new SearchException(e.getMessage(), e);</span>
-<span class="fc" id="L69">        }</span>
-<span class="fc" id="L70">    }</span>
+<span class="fc" id="L58">        PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);</span>
+<span class="fc" id="L59">        PutIndexTemplateResponse response = esClient.getClient().admin()</span>
+<span class="fc" id="L60">                .indices()</span>
+<span class="fc" id="L61">                .execute(PutIndexTemplateAction.INSTANCE, request)</span>
+<span class="fc" id="L62">                .actionGet();</span>
+<span class="fc" id="L63">        checkResponse(response);</span>
+<span class="fc" id="L64">        log.info(&quot;Created template {}&quot;, templateName);</span>
+<span class="fc" id="L65">    }</span>
 
     public void createTemplate(String templateName, InputStream jsonInput) {
         try {
-<span class="fc" id="L74">            String templateContent = IOUtils.toString(jsonInput, StandardCharsets.UTF_8.name());</span>
-<span class="fc" id="L75">            createTemplate(templateName, templateContent);</span>
-<span class="nc" id="L76">        } catch (IOException e) {</span>
-<span class="nc" id="L77">            log.error(e.getMessage(), e);</span>
-<span class="nc" id="L78">            throw new SearchException(e.getMessage(), e);</span>
-<span class="fc" id="L79">        }</span>
-<span class="fc" id="L80">    }</span>
+<span class="fc" id="L69">            String templateContent = IOUtils.toString(jsonInput, StandardCharsets.UTF_8.name());</span>
+<span class="fc" id="L70">            createTemplate(templateName, templateContent);</span>
+<span class="nc" id="L71">        } catch (IOException e) {</span>
+<span class="nc" id="L72">            log.error(e.getMessage(), e);</span>
+<span class="nc" id="L73">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L74">        }</span>
+<span class="fc" id="L75">    }</span>
 
     public void createIndex(DataBucket dataBucket) {
-<span class="fc" id="L83">        dataBucket.createIndex(this);</span>
-<span class="fc" id="L84">    }</span>
+<span class="fc" id="L78">        dataBucket.createIndex(this);</span>
+<span class="fc" id="L79">    }</span>
 
     public void createIndex(DataBucket dataBucket, int shards) {
-<span class="fc" id="L87">        dataBucket.createIndex(this, shards);</span>
-<span class="fc" id="L88">    }</span>
+<span class="fc" id="L82">        dataBucket.createIndex(this, shards);</span>
+<span class="fc" id="L83">    }</span>
 
     public void wipe(AliasWrappedBucket dataBucket) {
-<span class="fc" id="L91">        wipe(dataBucket, 0);</span>
-<span class="fc" id="L92">    }</span>
+<span class="fc" id="L86">        wipe(dataBucket, 0);</span>
+<span class="fc" id="L87">    }</span>
+
+    public void refresh(AliasWrappedBucket dataBucket, int shards) {
+<span class="fc" id="L90">        dataBucket.refresh(this, shards);</span>
+<span class="fc" id="L91">    }</span>
 
     public void wipe(AliasWrappedBucket dataBucket, int shards) {
-<span class="fc" id="L95">        dataBucket.wipe(this, shards);</span>
-<span class="fc" id="L96">    }</span>
+<span class="fc" id="L94">        dataBucket.wipe(this, shards);</span>
+<span class="fc" id="L95">    }</span>
 
     public void createIndex(String index) {
-<span class="fc" id="L99">        createIndex(index, 0);</span>
-<span class="fc" id="L100">    }</span>
+<span class="fc" id="L98">        createIndex(index, 0);</span>
+<span class="fc" id="L99">    }</span>
 
     public void createIndex(String index, int shards) {
-<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (!indexExists(index)) {</span>
-<span class="fc" id="L104">            CreateIndexRequest request = new CreateIndexRequest(index);</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (!indexExists(index)) {</span>
+<span class="fc" id="L103">            CreateIndexRequest request = new CreateIndexRequest(index);</span>
 
-<span class="fc bfc" id="L106" title="All 2 branches covered.">            if (shards &gt; 0) {</span>
-<span class="fc" id="L107">                Settings.Builder settings = Settings.builder()</span>
-<span class="fc" id="L108">                        .put(&quot;index.number_of_shards&quot;, shards);</span>
-<span class="fc" id="L109">                request = request.settings(settings);</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            if (shards &gt; 0) {</span>
+<span class="fc" id="L106">                Settings.Builder settings = Settings.builder()</span>
+<span class="fc" id="L107">                        .put(&quot;index.number_of_shards&quot;, shards);</span>
+<span class="fc" id="L108">                request = request.settings(settings);</span>
             }
 
-<span class="fc" id="L112">            CreateIndexResponse response = esClient.getClient()</span>
-<span class="fc" id="L113">                    .admin()</span>
-<span class="fc" id="L114">                    .indices()</span>
-<span class="fc" id="L115">                    .create(request)</span>
-<span class="fc" id="L116">                    .actionGet();</span>
-<span class="fc" id="L117">            checkResponse(response);</span>
-<span class="fc" id="L118">            final RefreshResponse refresh = esClient</span>
-<span class="fc" id="L119">                    .getClient()</span>
-<span class="fc" id="L120">                    .admin()</span>
-<span class="fc" id="L121">                    .indices()</span>
-<span class="fc" id="L122">                    .prepareRefresh(index)</span>
-<span class="fc" id="L123">                    .execute()</span>
-<span class="fc" id="L124">                    .actionGet();</span>
-<span class="pc bpc" id="L125" title="1 of 2 branches missed.">            if (refresh.getSuccessfulShards() &lt; 1) {</span>
-<span class="nc" id="L126">                throw new SearchException(String.format(&quot;Index fail in %s shards.&quot;, refresh.getFailedShards()));</span>
+<span class="fc" id="L111">            CreateIndexResponse response = esClient.getClient()</span>
+<span class="fc" id="L112">                    .admin()</span>
+<span class="fc" id="L113">                    .indices()</span>
+<span class="fc" id="L114">                    .create(request)</span>
+<span class="fc" id="L115">                    .actionGet();</span>
+<span class="fc" id="L116">            checkResponse(response);</span>
+<span class="fc" id="L117">            final RefreshResponse refresh = esClient</span>
+<span class="fc" id="L118">                    .getClient()</span>
+<span class="fc" id="L119">                    .admin()</span>
+<span class="fc" id="L120">                    .indices()</span>
+<span class="fc" id="L121">                    .prepareRefresh(index)</span>
+<span class="fc" id="L122">                    .execute()</span>
+<span class="fc" id="L123">                    .actionGet();</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">            if (refresh.getSuccessfulShards() &lt; 1) {</span>
+<span class="nc" id="L125">                throw new SearchException(String.format(&quot;Index fail in %s shards.&quot;, refresh.getFailedShards()));</span>
             }
-<span class="fc" id="L128">            log.info(&quot;Created index: {}&quot;, index);</span>
-<span class="fc" id="L129">        } else {</span>
-<span class="fc" id="L130">            log.info(&quot;Index {} already exists. Skipping&quot;, index);</span>
+<span class="fc" id="L127">            log.info(&quot;Created index: {}&quot;, index);</span>
+<span class="fc" id="L128">        } else {</span>
+<span class="fc" id="L129">            log.info(&quot;Index {} already exists. Skipping&quot;, index);</span>
         }
-<span class="fc" id="L132">    }</span>
+<span class="fc" id="L131">    }</span>
 
     public boolean aliasExists(String aliasName) {
-<span class="fc" id="L135">        AliasesExistResponse response = esClient.getClient()</span>
-<span class="fc" id="L136">                .admin()</span>
-<span class="fc" id="L137">                .indices()</span>
-<span class="fc" id="L138">                .prepareAliasesExist(aliasName)</span>
-<span class="fc" id="L139">                .execute()</span>
-<span class="fc" id="L140">                .actionGet();</span>
-<span class="fc" id="L141">        return response.exists();</span>
+<span class="fc" id="L134">        AliasesExistResponse response = esClient.getClient()</span>
+<span class="fc" id="L135">                .admin()</span>
+<span class="fc" id="L136">                .indices()</span>
+<span class="fc" id="L137">                .prepareAliasesExist(aliasName)</span>
+<span class="fc" id="L138">                .execute()</span>
+<span class="fc" id="L139">                .actionGet();</span>
+<span class="fc" id="L140">        return response.exists();</span>
     }
 
     public void createAlias(String aliasName, String... indices) {
-<span class="fc" id="L145">        createAlias(aliasName, null, indices);</span>
-<span class="fc" id="L146">    }</span>
+<span class="fc" id="L144">        createAlias(aliasName, null, indices);</span>
+<span class="fc" id="L145">    }</span>
 
     public void createAlias(String aliasName, QueryBuilder filter, String... indices) {
-<span class="fc" id="L149">        IndicesAliasesRequestBuilder req = esClient.getClient()</span>
-<span class="fc" id="L150">                .admin()</span>
-<span class="fc" id="L151">                .indices()</span>
-<span class="fc" id="L152">                .prepareAliases();</span>
-<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (filter != null) {</span>
-<span class="fc" id="L154">            req = req.addAlias(indices, aliasName, filter);</span>
+<span class="fc" id="L148">        IndicesAliasesRequestBuilder req = esClient.getClient()</span>
+<span class="fc" id="L149">                .admin()</span>
+<span class="fc" id="L150">                .indices()</span>
+<span class="fc" id="L151">                .prepareAliases();</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (filter != null) {</span>
+<span class="fc" id="L153">            req = req.addAlias(indices, aliasName, filter);</span>
         } else {
-<span class="fc" id="L156">            req = req.addAlias(indices, aliasName);</span>
+<span class="fc" id="L155">            req = req.addAlias(indices, aliasName);</span>
         }
-<span class="fc" id="L158">        IndicesAliasesResponse response = req.execute().actionGet();</span>
-<span class="fc" id="L159">        checkResponse(response);</span>
-<span class="fc" id="L160">    }</span>
+<span class="fc" id="L157">        IndicesAliasesResponse response = req.execute().actionGet();</span>
+<span class="fc" id="L158">        checkResponse(response);</span>
+<span class="fc" id="L159">    }</span>
+
+    public void moveAlias(String alias, String fromIndex, String toIndex) {
+<span class="fc" id="L162">        IndicesAliasesResponse response = esClient.getClient().admin()</span>
+<span class="fc" id="L163">                .indices()</span>
+<span class="fc" id="L164">                .prepareAliases()</span>
+<span class="fc" id="L165">                .removeAlias(fromIndex, alias)</span>
+<span class="fc" id="L166">                .addAlias(toIndex, alias)</span>
+<span class="fc" id="L167">                .execute().actionGet();</span>
+<span class="fc" id="L168">        checkResponse(response);</span>
+<span class="fc" id="L169">    }</span>
 
     public void removeAlias(String alias) {
-<span class="fc" id="L163">        GetAliasesRequest request = new GetAliasesRequest(alias);</span>
-<span class="fc" id="L164">        GetAliasesResponse response = esClient.getClient()</span>
-<span class="fc" id="L165">                .admin()</span>
-<span class="fc" id="L166">                .indices()</span>
-<span class="fc" id="L167">                .getAliases(request)</span>
-<span class="fc" id="L168">                .actionGet();</span>
-<span class="fc" id="L169">        ImmutableOpenMap&lt;String, List&lt;AliasMetaData&gt;&gt; aliases = response.getAliases();</span>
-<span class="fc bfc" id="L170" title="All 2 branches covered.">        if (!aliases.isEmpty()) {</span>
-<span class="fc" id="L171">            String[] indices = aliases.keys().toArray(String.class);</span>
-<span class="fc" id="L172">            IndicesAliasesResponse removeResponse = esClient.getClient()</span>
-<span class="fc" id="L173">                    .admin()</span>
-<span class="fc" id="L174">                    .indices()</span>
-<span class="fc" id="L175">                    .prepareAliases()</span>
-<span class="fc" id="L176">                    .removeAlias(indices, alias)</span>
-<span class="fc" id="L177">                    .execute().actionGet();</span>
-<span class="fc" id="L178">            checkResponse(removeResponse);</span>
+<span class="nc" id="L172">        GetAliasesRequest request = new GetAliasesRequest(alias);</span>
+<span class="nc" id="L173">        GetAliasesResponse response = esClient.getClient()</span>
+<span class="nc" id="L174">                .admin()</span>
+<span class="nc" id="L175">                .indices()</span>
+<span class="nc" id="L176">                .getAliases(request)</span>
+<span class="nc" id="L177">                .actionGet();</span>
+<span class="nc" id="L178">        ImmutableOpenMap&lt;String, List&lt;AliasMetaData&gt;&gt; aliases = response.getAliases();</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (!aliases.isEmpty()) {</span>
+<span class="nc" id="L180">            String[] indices = aliases.keys().toArray(String.class);</span>
+<span class="nc" id="L181">            IndicesAliasesResponse removeResponse = esClient.getClient()</span>
+<span class="nc" id="L182">                    .admin()</span>
+<span class="nc" id="L183">                    .indices()</span>
+<span class="nc" id="L184">                    .prepareAliases()</span>
+<span class="nc" id="L185">                    .removeAlias(indices, alias)</span>
+<span class="nc" id="L186">                    .execute().actionGet();</span>
+<span class="nc" id="L187">            checkResponse(removeResponse);</span>
         }
-<span class="fc" id="L180">    }</span>
+<span class="nc" id="L189">    }</span>
+
+    private static void checkResponse(AcknowledgedResponse response) {
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        if (!response.isAcknowledged()) {</span>
+<span class="nc" id="L193">            throw new SearchException(&quot;Error executing Elasticsearch request&quot;);</span>
+        }
+<span class="fc" id="L195">    }</span>
 
     public Collection&lt;String&gt; indexesForAlias(String alias) {
-<span class="fc" id="L183">        GetAliasesRequest r = new GetAliasesRequest(alias);</span>
-<span class="fc" id="L184">        GetAliasesResponse response = esClient.getClient()</span>
-<span class="fc" id="L185">                .admin()</span>
-<span class="fc" id="L186">                .indices()</span>
-<span class="fc" id="L187">                .getAliases(r)</span>
-<span class="fc" id="L188">                .actionGet();</span>
-<span class="fc" id="L189">        return Arrays.asList(response.getAliases().keys().toArray(String.class));</span>
+<span class="fc" id="L198">        GetAliasesRequest r = new GetAliasesRequest(alias);</span>
+<span class="fc" id="L199">        GetAliasesResponse response = esClient.getClient()</span>
+<span class="fc" id="L200">                .admin()</span>
+<span class="fc" id="L201">                .indices()</span>
+<span class="fc" id="L202">                .getAliases(r)</span>
+<span class="fc" id="L203">                .actionGet();</span>
+<span class="fc" id="L204">        return Arrays.asList(response.getAliases().keys().toArray(String.class));</span>
     }
 
     public boolean indexExists(String index) {
-<span class="fc" id="L193">        IndicesExistsResponse response = esClient.getClient()</span>
-<span class="fc" id="L194">                .admin()</span>
-<span class="fc" id="L195">                .indices()</span>
-<span class="fc" id="L196">                .prepareExists(index)</span>
-<span class="fc" id="L197">                .execute()</span>
-<span class="fc" id="L198">                .actionGet();</span>
-<span class="fc bfc" id="L199" title="All 4 branches covered.">        return response.isExists() &amp;&amp; !aliasExists(index);</span>
+<span class="fc" id="L208">        IndicesExistsResponse response = esClient.getClient()</span>
+<span class="fc" id="L209">                .admin()</span>
+<span class="fc" id="L210">                .indices()</span>
+<span class="fc" id="L211">                .prepareExists(index)</span>
+<span class="fc" id="L212">                .execute()</span>
+<span class="fc" id="L213">                .actionGet();</span>
+<span class="fc bfc" id="L214" title="All 4 branches covered.">        return response.isExists() &amp;&amp; !aliasExists(index);</span>
     }
 
     public void removeIndex(String index) {
-<span class="fc" id="L203">        DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);</span>
-<span class="fc" id="L204">        DeleteIndexResponse response = esClient.getClient()</span>
-<span class="fc" id="L205">                .admin()</span>
-<span class="fc" id="L206">                .indices()</span>
-<span class="fc" id="L207">                .delete(deleteRequest)</span>
-<span class="fc" id="L208">                .actionGet();</span>
-<span class="fc" id="L209">        checkResponse(response);</span>
-<span class="fc" id="L210">    }</span>
+<span class="fc" id="L218">        DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);</span>
+<span class="fc" id="L219">        DeleteIndexResponse response = esClient.getClient()</span>
+<span class="fc" id="L220">                .admin()</span>
+<span class="fc" id="L221">                .indices()</span>
+<span class="fc" id="L222">                .delete(deleteRequest)</span>
+<span class="fc" id="L223">                .actionGet();</span>
+<span class="fc" id="L224">        checkResponse(response);</span>
+<span class="fc" id="L225">    }</span>
 
     public void copyData(String srcIndex, String targetIndex) {
-<span class="fc" id="L213">        Search targetSearch = esClient.search(new DataBucket(targetIndex, ANYTYPE));</span>
-<span class="pc" id="L214">        try (IndexBatch batch = targetSearch.indexer().batch(100)) {</span>
-<span class="fc" id="L215">            esClient.search(new DataBucket(srcIndex, ANYTYPE))</span>
-<span class="fc" id="L216">                    .scrollFullIndex()</span>
-<span class="fc" id="L217">                    .forEach((hit) -&gt; batch.add(hit.getId(), hit.getSourceAsString()));</span>
-<span class="pc bpc" id="L218" title="6 of 8 branches missed.">        }</span>
-<span class="fc" id="L219">    }</span>
+<span class="fc" id="L228">        List&lt;SearchHit&gt; hits = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L229">        Search.scrollIndex(esClient, srcIndex)</span>
+<span class="fc" id="L230">                .forEach((hit) -&gt; {</span>
+<span class="fc" id="L231">                    hits.add(hit);</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">                    if (hits.size() == DATA_COPY_BATCH_SIZE) {</span>
+<span class="fc" id="L233">                        bulkIndex(hits, targetIndex);</span>
+<span class="fc" id="L234">                        hits.clear();</span>
+                    }
+<span class="fc" id="L236">                });</span>
+<span class="fc" id="L237">        bulkIndex(hits, targetIndex);</span>
+<span class="fc" id="L238">    }</span>
+
+    private void bulkIndex(List&lt;SearchHit&gt; hits, String targetIndex) {
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">        if (hits.size() &gt; 0) {</span>
+<span class="fc" id="L242">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">            for (SearchHit hit : hits) {</span>
+<span class="fc" id="L244">                IndexRequestBuilder indexRequest = esClient.getClient()</span>
+<span class="fc" id="L245">                        .prepareIndex()</span>
+<span class="fc" id="L246">                        .setIndex(targetIndex)</span>
+<span class="fc" id="L247">                        .setType(hit.getType())</span>
+<span class="fc" id="L248">                        .setId(hit.getId())</span>
+<span class="fc" id="L249">                        .setSource(hit.getSourceAsString(), XContentType.JSON);</span>
+<span class="fc" id="L250">                request.add(indexRequest);</span>
+<span class="fc" id="L251">            }</span>
+<span class="fc" id="L252">            BulkResponse response = request.execute().actionGet();</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            if (response.hasFailures()) {</span>
+<span class="nc" id="L254">                throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
+            }
+        }
+<span class="fc" id="L257">    }</span>
+
+
+    public int getShards(String index) {
+<span class="nc" id="L261">        GetSettingsResponse response = esClient.getClient()</span>
+<span class="nc" id="L262">                .admin()</span>
+<span class="nc" id="L263">                .indices()</span>
+<span class="nc" id="L264">                .prepareGetSettings(index)</span>
+<span class="nc" id="L265">                .get();</span>
+<span class="nc" id="L266">        ImmutableOpenMap&lt;String, Settings&gt; settings = response.getIndexToSettings();</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        if (!settings.containsKey(index)) {</span>
+<span class="nc" id="L268">            throw new SearchException(&quot;Could not find settings for index &quot; + index);</span>
+        }
+<span class="nc" id="L270">        return settings.get(index).getAsInt(INDEX_NUMBER_OF_SHARDS, null);</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

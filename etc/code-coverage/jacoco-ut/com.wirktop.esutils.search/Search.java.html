@@ -110,28 +110,27 @@ public class Search {
 <span class="fc" id="L110">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
-    public Stream&lt;SearchHit&gt; scrollFullIndex() {
-<span class="fc" id="L114">        SearchRequestBuilder request = esClient.getClient()</span>
-<span class="fc" id="L115">                .prepareSearch(bucket.getIndex());</span>
-<span class="fc" id="L116">        ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
-<span class="fc" id="L117">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    public static Stream&lt;SearchHit&gt; scrollIndex(ElasticSearchClient esClient, String index) {
+<span class="fc" id="L114">        SearchRequestBuilder request = esClient.getClient().prepareSearch(index);</span>
+<span class="fc" id="L115">        ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L116">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query) {
-<span class="fc" id="L121">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
+<span class="fc" id="L120">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query, int pageSize) {
-<span class="fc" id="L125">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
-<span class="fc" id="L126">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+<span class="fc" id="L124">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
+<span class="fc" id="L125">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
     }
 
     public DataBucket bucket() {
-<span class="fc" id="L130">        return bucket;</span>
+<span class="fc" id="L129">        return bucket;</span>
     }
 
     public ElasticSearchClient esClient() {
-<span class="fc" id="L134">        return esClient;</span>
+<span class="fc" id="L133">        return esClient;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

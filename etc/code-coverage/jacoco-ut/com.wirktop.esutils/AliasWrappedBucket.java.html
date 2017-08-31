@@ -27,37 +27,42 @@ public class AliasWrappedBucket extends DataBucket {
 <span class="fc" id="L27">        String alias = getIndex();</span>
 <span class="fc" id="L28">        String crtIndex = actualIndex(admin, alias);</span>
 <span class="fc" id="L29">        String nextIndex = nextIndexVersion(admin, alias);</span>
-<span class="fc" id="L30">        admin.removeAlias(alias);</span>
-<span class="pc bpc" id="L31" title="2 of 4 branches missed.">        if (crtIndex != null &amp;&amp; admin.indexExists(crtIndex)) {</span>
-<span class="fc" id="L32">            admin.removeIndex(crtIndex);</span>
-        }
+<span class="fc" id="L30">        admin.createIndex(nextIndex, shards);</span>
+<span class="fc" id="L31">        admin.moveAlias(alias, crtIndex, nextIndex);</span>
+<span class="fc" id="L32">        admin.removeIndex(crtIndex);</span>
+<span class="fc" id="L33">    }</span>
 
-<span class="fc" id="L35">        admin.createIndex(nextIndex, shards);</span>
-<span class="fc" id="L36">        admin.removeAlias(alias);</span>
-<span class="fc" id="L37">        admin.createAlias(alias, nextIndex);</span>
-<span class="fc" id="L38">    }</span>
+    protected void refresh(Admin admin, int shards) {
+<span class="fc" id="L36">        String alias = getIndex();</span>
+<span class="fc" id="L37">        String crtIndex = actualIndex(admin, alias);</span>
+<span class="fc" id="L38">        String nextIndex = nextIndexVersion(admin, alias);</span>
+<span class="fc" id="L39">        admin.createIndex(nextIndex, shards);</span>
+<span class="fc" id="L40">        admin.copyData(crtIndex, nextIndex);</span>
+<span class="fc" id="L41">        admin.moveAlias(alias, crtIndex, nextIndex);</span>
+<span class="fc" id="L42">        admin.removeIndex(crtIndex);</span>
+<span class="fc" id="L43">    }</span>
 
     private String actualIndex(Admin admin, String aliasWrapper) {
-<span class="fc" id="L41">        Collection&lt;String&gt; indices = admin.indexesForAlias(aliasWrapper);</span>
-<span class="fc" id="L42">        Pattern pattern = Pattern.compile(aliasWrapper + &quot;_\\d{12}&quot;);</span>
-<span class="fc bfc" id="L43" title="All 2 branches covered.">        for (String index : indices) {</span>
-<span class="pc bpc" id="L44" title="1 of 2 branches missed.">            if (pattern.matcher(index).matches()) {</span>
-<span class="fc" id="L45">                return index;</span>
+<span class="fc" id="L46">        Collection&lt;String&gt; indices = admin.indexesForAlias(aliasWrapper);</span>
+<span class="fc" id="L47">        Pattern pattern = Pattern.compile(aliasWrapper + &quot;_\\d{12}&quot;);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        for (String index : indices) {</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">            if (pattern.matcher(index).matches()) {</span>
+<span class="fc" id="L50">                return index;</span>
             }
-<span class="nc" id="L47">        }</span>
-<span class="fc" id="L48">        return null;</span>
+<span class="nc" id="L52">        }</span>
+<span class="fc" id="L53">        return null;</span>
     }
 
     private String nextIndexVersion(Admin admin, String aliasWrapper) {
-<span class="fc" id="L52">        Collection&lt;String&gt; indices = admin.indexesForAlias(aliasWrapper);</span>
-<span class="fc" id="L53">        long crtVersion = 0;</span>
-<span class="fc bfc" id="L54" title="All 2 branches covered.">        for (String index : indices) {</span>
-<span class="pc bpc" id="L55" title="1 of 2 branches missed.">            if (index.startsWith(aliasWrapper)) {</span>
-<span class="fc" id="L56">                crtVersion = Long.parseLong(index.substring(index.lastIndexOf(&quot;_&quot;) + 1));</span>
-<span class="fc" id="L57">                break;</span>
+<span class="fc" id="L57">        Collection&lt;String&gt; indices = admin.indexesForAlias(aliasWrapper);</span>
+<span class="fc" id="L58">        long crtVersion = 0;</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        for (String index : indices) {</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">            if (index.startsWith(aliasWrapper)) {</span>
+<span class="fc" id="L61">                crtVersion = Long.parseLong(index.substring(index.lastIndexOf(&quot;_&quot;) + 1));</span>
+<span class="fc" id="L62">                break;</span>
             }
-<span class="nc" id="L59">        }</span>
-<span class="fc" id="L60">        return aliasWrapper + &quot;_&quot; + String.format(&quot;%012d&quot;, crtVersion + 1);</span>
+<span class="nc" id="L64">        }</span>
+<span class="fc" id="L65">        return aliasWrapper + &quot;_&quot; + String.format(&quot;%012d&quot;, crtVersion + 1);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
