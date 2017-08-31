@@ -1,7 +1,7 @@
 # ElasticSearch Utils
 
 ## About
-**esutils** is a Java library that adds some fluency to the interaction with ElasticSearch.
+**esutils** is a Java library that aims to make interaction with ElasticSearch a bit more fluent.
 * Javadocs: https://cosmin-marginean.github.io/esutils/etc/javadoc/ 
 * Code coverage: https://cosmin-marginean.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
@@ -20,15 +20,14 @@
 ```
 
 ## High level concepts
-The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search`, `Admin` etc.
-The objective is to have _some_ separation of concerns, but to also have some uniformity in the API and component dependencies.
+The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search` or `Admin`.
+The objective is to have _some_ separation of concerns, but also a certain fluency in the API and component dependencies.
 
 For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
-a `DataBucket` parameter. A `DataBucket` is a "pointer" to an (index,type) tuple. Custom functionality and naming conventions 
+a `DataBucket` parameter. A `DataBucket` is a "pointer" to an (index,type) tuple. Custom functionality and naming overrides 
 can then be implemented by extending this class. One example is `AliasWrappedBucket` (more on that below).
 
-This way each instance is logically isolated and makes for a cleaner client code. It also gives the API user more flexibility in deciding 
-which components should be application state and which can be produced dynamically.
+This gives the API user more flexibility in deciding which components should be application state and which can be produced dynamically.
 
 ## Creating a client instance
 ```
@@ -119,4 +118,40 @@ admin.createIndex(index, numberOfShards);
 
 // Create template
 client.admin().createTemplate("mytemplate", "{...}");
+```
+
+## `AliasWrappedBucket`
+And `AliasWrappedBucket` is a specialized type of `DataBucket` that transparently manages an index alias in order to meet certain
+requirements around re-indexing and down-time (more on the topic here: https://www.elastic.co/guide/en/elasticsearch/guide/current/index-aliases.html).
+
+When creating an index using an `AliasWrappedBucket`, the component will create both the index and the alias required to manage this bucket. The
+index will be automatically incremented so a version is transparently maintained as well.
+
+```
+ElasticSearchClient client = ...
+Admin admin = client.admin();
+
+AliasWrappedBucket bucket = new AliasWrappedBucket("myindex", "mytype");
+admin.createIndex(bucket);
+
+```
+This creates the following:
+* a `myindex_000000000001` index
+* a `myindex` alias pointing to `myindex_000000000001` only
+
+This bucket can also be wiped, which effectively deletes the existing index, creates a new one with a new version and re-assings the alias.
+
+```
+admin.wipe(bucket);
+```
+This will result in:
+* a `myindex_000000000002` index
+* a `myindex` alias pointing to `myindex_000000000002` only
+
+Using an `AliasWrappedBucket` however is no different when performing common search and indexing operations:
+```
+AliasWrappedBucket bucket = new AliasWrappedBucket("myindex", "mytype");
+Search search = client.search(bucket);
+search.search(...);
+search.indexer().index(...);
 ```
