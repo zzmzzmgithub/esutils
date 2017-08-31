@@ -1,6 +1,9 @@
 package com.wirktop.esutils.index;
 
-import com.wirktop.esutils.*;
+import com.wirktop.esutils.DataBucket;
+import com.wirktop.esutils.Document;
+import com.wirktop.esutils.Json;
+import com.wirktop.esutils.SearchException;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -45,6 +48,10 @@ public class Indexer {
 
     public String indexJson(String id, String jsonDocument, boolean refresh) {
         return indexDocument(new Document(id, jsonDocument), refresh);
+    }
+
+    public String indexDocument(Document document) {
+        return indexDocument(document, false);
     }
 
     public String indexDocument(Document document, boolean waitRefresh) {

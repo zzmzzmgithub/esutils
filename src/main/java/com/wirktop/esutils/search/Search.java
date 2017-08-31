@@ -45,7 +45,7 @@ public class Search {
                 : null;
     }
 
-    public String getStr(String id) {
+    public String getJson(String id) {
         GetResponse response = get(id);
         return response.isExists()
                 ? response.getSourceAsString()

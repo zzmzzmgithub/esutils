@@ -61,7 +61,7 @@ public class SearchTest extends TestBase {
         Search search = search("test-get-str", "type1");
         String document = randomDoc();
         String id = search.indexer().indexJson(document);
-        String jsonDoc = search.getStr(id);
+        String jsonDoc = search.getJson(id);
         assertSame(new JSONObject(jsonDoc), new JSONObject(document));
     }
 
@@ -151,7 +151,7 @@ public class SearchTest extends TestBase {
         int docCount = 215;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit));
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.scroll()
@@ -166,10 +166,10 @@ public class SearchTest extends TestBase {
         int docCount = 119;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit));
         }
         waitForIndexedDocs(index, docCount);
-        List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery(), 128)
+        List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery(), 34)
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }
@@ -177,12 +177,12 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testSearchHitsDefaultPageSize() throws Exception {
-        String index = "test-search-hits";
+        String index = "test-search-hits-default-page-size";
         Search search = search(index, "type1");
         int docCount = 361;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit));
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery())
@@ -195,7 +195,7 @@ public class SearchTest extends TestBase {
         Search search = search("test-missing-doc", "type1");
         String id = search.indexer().indexJson(randomDoc());
         Assert.assertNull(search.get("askjdkjbadfasdf", TestPojo.class));
-        Assert.assertNull(search.getStr("askjdkjbadfas12312093df"));
+        Assert.assertNull(search.getJson("askjdkjbadfas12312093df"));
         Assert.assertNull(search.getMap(UUID.randomUUID().toString()));
         Assert.assertNotNull(id);
     }
@@ -286,7 +286,7 @@ public class SearchTest extends TestBase {
         PojoSerialize pojo = new PojoSerialize();
         Instant time = pojo.getTime();
         String id = search.indexer().indexObject(pojo);
-        JSONObject defaultSerialized = new JSONObject(search.getStr(id));
+        JSONObject defaultSerialized = new JSONObject(search.getJson(id));
         Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("nano"), time.getNano());
         Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("epochSecond"), time.getEpochSecond());
 
@@ -299,10 +299,10 @@ public class SearchTest extends TestBase {
         Search search2 = esClient().search(new DataBucket("test-custom-object-mapper2", "typemapped"));
         esClient().setObjectMapper(objectMapper);
         String newId = search2.indexer().indexObject(pojo);
-        String str = search2.getStr(newId);
+        String str = search2.getJson(newId);
         Assert.assertEquals("{\"time\":\"" + time.toString() + "\"}", str);
         Assert.assertEquals(time, search2.get(newId, PojoSerialize.class).getTime());
-        Assert.assertEquals(time.toString(), new JSONObject(search2.getStr(newId)).getString("time"));
+        Assert.assertEquals(time.toString(), new JSONObject(search2.getJson(newId)).getString("time"));
     }
 
     public static final class PojoSerialize {

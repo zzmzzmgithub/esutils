@@ -130,6 +130,28 @@ public class AdminTest extends TestBase {
     }
 
     @Test
+    public void testRemoveAlias() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+        String alias = "aliasnameremovealias";
+        String index = "indexnamealiasnameremovealias";
+        admin.createIndex(index);
+        admin.createAlias(alias, index);
+        Assert.assertEquals(1, admin.indexesForAlias(alias).size());
+        admin.removeAlias(alias);
+        Assert.assertEquals(0, admin.indexesForAlias(alias).size());
+    }
+
+    @Test
+    public void testGetShards() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+        String index = "indexgetshards";
+        admin.createIndex(index, 17);
+        Assert.assertEquals(17, admin.getShards(index));
+    }
+
+    @Test
     public void testCopyIndex() throws Exception {
         ElasticSearchClient client = new ElasticSearchClient(client());
         Admin admin = client.admin();

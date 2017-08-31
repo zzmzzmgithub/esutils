@@ -14,12 +14,29 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Marginean
  */
 public class IndexerTest extends TestBase {
+
+    @Test
+    public void testIndexDocument() throws Exception {
+        Search search = search("indextestindexdocument", "type1");
+        Indexer indexer = search.indexer();
+        String doc = randomDoc();
+        indexer.indexDocument(new Document("123", doc));
+        Assert.assertEquals(search.getJson("123"), doc);
+    }
+
+    @Test
+    public void testIndexDocumentWithRefresh() throws Exception {
+        Search search = search("indextestindexdocumentrefresh", "type1");
+        Indexer indexer = search.indexer();
+        String doc = randomDoc();
+        indexer.indexDocument(new Document("345345", doc), true);
+        Assert.assertEquals(search.getJson("345345"), doc);
+    }
 
     @Test
     public void testIndexPojo() throws Exception {
