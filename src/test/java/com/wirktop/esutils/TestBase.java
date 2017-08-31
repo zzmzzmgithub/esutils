@@ -32,6 +32,7 @@ public abstract class TestBase {
     private static final String CLUSTER = "wirktop-esutils-test";
     protected static ObjectMapper objectMapper = new ObjectMapper();
     private static TransportClient client;
+    private static ElasticSearchClient esClient;
 
     @BeforeClass
     public static void bootstrap() throws Exception {
@@ -39,6 +40,7 @@ public abstract class TestBase {
         client = new PreBuiltTransportClient(settings);
         InetAddress address = InetAddress.getByName("localhost");
         client.addTransportAddress(new InetSocketTransportAddress(address, 9300));
+        esClient = new ElasticSearchClient(client());
     }
 
     @AfterClass
@@ -117,38 +119,38 @@ public abstract class TestBase {
     }
 
     public ElasticSearchClient esClient() {
-        return new ElasticSearchClient(client());
+        return esClient;
     }
 
     public Search searchTcp(String index, String type) {
         return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(new DataBucket(index, type));
     }
 
-    public List<JSONObject> generateDocuments(int count, boolean addError) throws IOException {
-        List<JSONObject> docs = new ArrayList<>();
+    public List<String> generateDocuments(int count, boolean addError) throws IOException {
+        List<String> docs = new ArrayList<>();
         String template = IOUtils.toString(getClass().getResourceAsStream("/docs/bulk-doc-template.json"), StandardCharsets.UTF_8);
         for (int i = 0; i < count; i++) {
             String docStr = template.replaceAll("VAR1", UUID.randomUUID().toString())
                     .replaceAll("VAR2", UUID.randomUUID().toString())
                     .replaceAll("VAR2", UUID.randomUUID().toString());
-            docs.add(new JSONObject(docStr));
+            docs.add(docStr);
         }
         if (addError) {
             String template2 = IOUtils.toString(getClass().getResourceAsStream("/docs/bulk-doc-template-different.json"), StandardCharsets.UTF_8);
             String docStr = template2.replaceAll("VAR1", UUID.randomUUID().toString())
                     .replaceAll("VAR2", UUID.randomUUID().toString())
                     .replaceAll("VAR2", UUID.randomUUID().toString());
-            docs.add(new JSONObject(docStr));
+            docs.add(docStr);
         }
         return docs;
     }
 
-    public JSONObject randomDoc() throws IOException {
+    public String randomDoc() throws IOException {
         String template = IOUtils.toString(getClass().getResourceAsStream("/docs/bulk-doc-template.json"), StandardCharsets.UTF_8);
         String docStr = template.replaceAll("VAR1", UUID.randomUUID().toString())
                 .replaceAll("VAR2", UUID.randomUUID().toString())
                 .replaceAll("VAR2", UUID.randomUUID().toString());
-        return new JSONObject(docStr);
+        return docStr;
     }
 
     protected SearchResponse waitForIndexedDocs(String index, int docCount) {
@@ -177,7 +179,7 @@ public abstract class TestBase {
                 json.put("name", UUID.randomUUID().toString());
                 json.put("age", Math.abs(random.nextInt()) % 100);
                 json.put("gender", i % 2 == 0 ? "male" : "female");
-                batch.add(json);
+                batch.add(UUID.randomUUID().toString(), json.toString());
             }
         }
     }

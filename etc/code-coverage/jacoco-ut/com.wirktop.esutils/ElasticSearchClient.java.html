@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ElasticSearchClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils</a> &gt; <span class="el_source">ElasticSearchClient.java</span></div><h1>ElasticSearchClient.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -18,59 +19,72 @@ import java.util.Collection;
  */
 public class ElasticSearchClient {
 
-<span class="fc" id="L21">    private static final Logger log = LoggerFactory.getLogger(ElasticSearchClient.class);</span>
+<span class="fc" id="L22">    private static final Logger log = LoggerFactory.getLogger(ElasticSearchClient.class);</span>
 
     private Client client;
     private Admin admin;
+<span class="fc" id="L26">    private Json json = new Json(new ObjectMapper());</span>
 
     /**
      * @param nodes       A collection of hostname:port elements
      * @param clusterName Name of ElasticSearch cluster
      */
     public ElasticSearchClient(Collection&lt;String&gt; nodes, String clusterName) {
-<span class="fc" id="L31">        this(transportClient(nodes, clusterName));</span>
-<span class="fc" id="L32">    }</span>
+<span class="fc" id="L33">        this(transportClient(nodes, clusterName));</span>
+<span class="fc" id="L34">    }</span>
 
-<span class="fc" id="L34">    public ElasticSearchClient(Client client) {</span>
-<span class="fc bfc" id="L35" title="All 2 branches covered.">        if (client == null) {</span>
-<span class="fc" id="L36">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+<span class="fc" id="L36">    public ElasticSearchClient(Client client) {</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (client == null) {</span>
+<span class="fc" id="L38">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
         }
 
-<span class="fc" id="L39">        this.client = client;</span>
-<span class="fc" id="L40">        admin = new Admin(client);</span>
-<span class="fc" id="L41">    }</span>
+<span class="fc" id="L41">        this.client = client;</span>
+<span class="fc" id="L42">        admin = new Admin(this);</span>
+<span class="fc" id="L43">    }</span>
 
     private static Client transportClient(Collection&lt;String&gt; nodes, String clusterName) {
-<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (clusterName == null) {</span>
-<span class="fc" id="L45">            throw new IllegalArgumentException(&quot;clusterName argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (clusterName == null) {</span>
+<span class="fc" id="L47">            throw new IllegalArgumentException(&quot;clusterName argument cannot be null&quot;);</span>
         }
 
         try {
-<span class="fc" id="L49">            Settings settings = Settings.builder().put(&quot;cluster.name&quot;, clusterName).build();</span>
-<span class="fc" id="L50">            TransportClient client = new PreBuiltTransportClient(settings);</span>
-<span class="fc bfc" id="L51" title="All 2 branches covered.">            for (String nodeAddr : nodes) {</span>
-<span class="fc" id="L52">                String[] addressElements = nodeAddr.split(&quot;:&quot;);</span>
-<span class="fc bfc" id="L53" title="All 2 branches covered.">                if (addressElements.length != 2) {</span>
-<span class="fc" id="L54">                    throw new IllegalArgumentException(String.format(&quot;Address %s has incorrect format (hostname:port)&quot;, nodeAddr));</span>
+<span class="fc" id="L51">            Settings settings = Settings.builder().put(&quot;cluster.name&quot;, clusterName).build();</span>
+<span class="fc" id="L52">            TransportClient client = new PreBuiltTransportClient(settings);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">            for (String nodeAddr : nodes) {</span>
+<span class="fc" id="L54">                String[] addressElements = nodeAddr.split(&quot;:&quot;);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                if (addressElements.length != 2) {</span>
+<span class="fc" id="L56">                    throw new IllegalArgumentException(String.format(&quot;Address %s has incorrect format (hostname:port)&quot;, nodeAddr));</span>
                 }
-<span class="fc" id="L56">                String hostname = addressElements[0].trim();</span>
-<span class="fc" id="L57">                int port = Integer.parseInt(addressElements[1].trim());</span>
-<span class="fc" id="L58">                InetAddress byName = InetAddress.getByName(hostname);</span>
-<span class="fc" id="L59">                client.addTransportAddress(new InetSocketTransportAddress(byName, port));</span>
-<span class="fc" id="L60">            }</span>
-<span class="fc" id="L61">            return client;</span>
-<span class="fc" id="L62">        } catch (UnknownHostException e) {</span>
-<span class="fc" id="L63">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
-<span class="fc" id="L64">            throw new SearchException(e.getMessage(), e);</span>
+<span class="fc" id="L58">                String hostname = addressElements[0].trim();</span>
+<span class="fc" id="L59">                int port = Integer.parseInt(addressElements[1].trim());</span>
+<span class="fc" id="L60">                InetAddress byName = InetAddress.getByName(hostname);</span>
+<span class="fc" id="L61">                client.addTransportAddress(new InetSocketTransportAddress(byName, port));</span>
+<span class="fc" id="L62">            }</span>
+<span class="fc" id="L63">            return client;</span>
+<span class="fc" id="L64">        } catch (UnknownHostException e) {</span>
+<span class="fc" id="L65">            log.error(&quot;Error creating Search component: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L66">            throw new SearchException(e.getMessage(), e);</span>
         }
     }
 
     public Search search(DataBucket bucket) {
-<span class="fc" id="L69">        return new Search(client, bucket);</span>
+<span class="fc" id="L71">        return new Search(this, bucket);</span>
     }
 
     public Admin admin() {
-<span class="fc" id="L73">        return admin;</span>
+<span class="fc" id="L75">        return admin;</span>
+    }
+
+    public Client getClient() {
+<span class="fc" id="L79">        return client;</span>
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+<span class="fc" id="L83">        json = new Json(objectMapper);</span>
+<span class="fc" id="L84">    }</span>
+
+    public Json json() {
+<span class="fc" id="L87">        return json;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

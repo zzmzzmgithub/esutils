@@ -1,21 +1,17 @@
 package com.wirktop.esutils.search;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.DataBucket;
-import com.wirktop.esutils.SearchException;
+import com.wirktop.esutils.ElasticSearchClient;
 import com.wirktop.esutils.index.Indexer;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Map;
@@ -28,30 +24,20 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
-    private static final Logger log = LoggerFactory.getLogger(Search.class);
-
-    private Client client;
+    private ElasticSearchClient esClient;
     private DataBucket bucket;
-    private ObjectMapper objectMapper = new ObjectMapper();
     private Indexer indexer;
 
-    public Search(Client client, DataBucket bucket) {
-        if (client == null) {
+    public Search(ElasticSearchClient esClient, DataBucket bucket) {
+        if (esClient == null) {
             throw new IllegalArgumentException("client argument cannot be null");
         }
         if (bucket == null) {
             throw new IllegalArgumentException("bucket argument cannot be null");
         }
-        this.client = client;
+        this.esClient = esClient;
         this.bucket = bucket;
         this.indexer = new Indexer(this);
-    }
-
-    public JSONObject getJson(String id) {
-        GetResponse response = get(id);
-        return response.isExists()
-                ? new JSONObject(response.getSourceAsString())
-                : null;
     }
 
     public Map<String, Object> getMap(String id) {
@@ -69,19 +55,15 @@ public class Search {
     }
 
     public <T> T get(String id, Class<T> docClass) {
-        try {
-            GetResponse response = get(id);
-            return response.isExists()
-                    ? objectMapper.readValue(response.getSourceAsString(), docClass)
-                    : null;
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new SearchException(e.getMessage(), e);
-        }
+        GetResponse response = get(id);
+        return response.isExists()
+                ? esClient.json().toPojo(response.getSourceAsString(), docClass)
+                : null;
     }
 
     private GetResponse get(String id) {
-        GetRequestBuilder getRequest = client.prepareGet(bucket.getIndex(), bucket.getType(), id);
+        GetRequestBuilder getRequest = esClient.getClient()
+                .prepareGet(bucket.getIndex(), bucket.getType(), id);
         return getRequest.execute().actionGet();
     }
 
@@ -113,17 +95,25 @@ public class Search {
         return indexer;
     }
 
-    public Client client() {
-        return client;
-    }
-
     public SearchRequestBuilder searchRequest() {
-        return client.prepareSearch(bucket.getIndex())
+        return esClient.getClient()
+                .prepareSearch(bucket.getIndex())
                 .setTypes(bucket.getType());
     }
 
+    public Stream<SearchHit> scroll() {
+        return scroll(null);
+    }
+
     public Stream<SearchHit> scroll(QueryBuilder query) {
-        ScrollIterator iterator = new ScrollIterator(this, query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
+        ScrollIterator iterator = new ScrollIterator(esClient, searchRequest(), query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
+    }
+
+    public Stream<SearchHit> scrollFullIndex() {
+        SearchRequestBuilder request = esClient.getClient()
+                .prepareSearch(bucket.getIndex());
+        ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
@@ -136,15 +126,11 @@ public class Search {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     public DataBucket bucket() {
         return bucket;
+    }
+
+    public ElasticSearchClient esClient() {
+        return esClient;
     }
 }

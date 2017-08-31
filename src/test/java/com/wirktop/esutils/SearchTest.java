@@ -48,37 +48,28 @@ public class SearchTest extends TestBase {
     }
 
     @Test
-    public void testGetJson() throws Exception {
-        Search search = search("test-get-json", "type1");
-        JSONObject document = randomDoc();
-        String id = search.indexer().index(document);
-        JSONObject json = search.getJson(id);
-        assertSame(json, document);
-    }
-
-    @Test
     public void testGetMap() throws Exception {
         Search search = search("test-get-map", "type1");
-        JSONObject document = randomDoc();
-        String id = search.indexer().index(document);
+        String document = randomDoc();
+        String id = search.indexer().indexJson(document);
         Map<String, Object> map = search.getMap(id);
-        assertSame(new JSONObject(map), document);
+        assertSame(new JSONObject(map), new JSONObject(document));
     }
 
     @Test
     public void testGetStr() throws Exception {
         Search search = search("test-get-str", "type1");
-        JSONObject document = randomDoc();
-        String id = search.indexer().index(document);
+        String document = randomDoc();
+        String id = search.indexer().indexJson(document);
         String jsonDoc = search.getStr(id);
-        assertSame(new JSONObject(jsonDoc), document);
+        assertSame(new JSONObject(jsonDoc), new JSONObject(document));
     }
 
     @Test
     public void testGetPojo() throws Exception {
         Search search = search("test-get-pojo", "type1");
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
-        String id = search.indexer().index(document);
+        String id = search.indexer().indexObject(document);
         assertSamePojo1(search, document, id);
         assertSame(new JSONObject(pojoToString(document)), new JSONObject(pojoToString(search.get(id, TestPojo.class))));
     }
@@ -90,10 +81,26 @@ public class SearchTest extends TestBase {
         int docCount = 573;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach(batch::add);
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.scroll(QueryBuilders.matchAllQuery())
+                .collect(Collectors.toList());
+        Assert.assertEquals(docs.size(), docCount);
+    }
+
+
+    @Test
+    public void testScrollNoFilter() throws Exception {
+        String index = "test-scroll-nofilter";
+        Search search = search(index, "type1");
+        int docCount = 573;
+        try (IndexBatch batch = search.indexer().batch()) {
+            generateDocuments(docCount, false)
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
+        }
+        waitForIndexedDocs(index, docCount);
+        List<SearchHit> docs = search.scroll()
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }
@@ -105,7 +112,7 @@ public class SearchTest extends TestBase {
         int docCount = 573;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach(batch::add);
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery(), 128)
@@ -121,7 +128,7 @@ public class SearchTest extends TestBase {
         int docCount = 573;
         try (IndexBatch batch = search.indexer().batch()) {
             generateDocuments(docCount, false)
-                    .forEach(batch::add);
+                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
         }
         waitForIndexedDocs(index, docCount);
         List<SearchHit> docs = search.search(QueryBuilders.matchAllQuery())
@@ -132,10 +139,9 @@ public class SearchTest extends TestBase {
     @Test
     public void testMissingDoc() throws Exception {
         Search search = search("test-missing-doc", "type1");
-        String id = search.indexer().index(randomDoc());
+        String id = search.indexer().indexJson(randomDoc());
         Assert.assertNull(search.get("askjdkjbadfasdf", TestPojo.class));
         Assert.assertNull(search.getStr("askjdkjbadfas12312093df"));
-        Assert.assertNull(search.getJson(UUID.randomUUID().toString()));
         Assert.assertNull(search.getMap(UUID.randomUUID().toString()));
         Assert.assertNotNull(id);
     }
@@ -176,18 +182,49 @@ public class SearchTest extends TestBase {
     @Test
     public void testCustomBucket() throws Exception {
         Search search = esClient().search(new CustomBucket("private-custom-index", "mytype", "custom1"));
-        JSONObject document = randomDoc();
-        String id = search.indexer().index(document);
+        String document = randomDoc();
+        String id = search.indexer().indexJson(document);
         Map<String, Object> indexedDoc = getMap("custom1---private-custom-index", "mytype", id);
         Assert.assertNotNull(indexedDoc);
-        assertSame(document, indexedDoc);
+        assertSame(new JSONObject(document), indexedDoc);
     }
 
     @Test(expected = SearchException.class)
     public void testFailDeserialize() throws Exception {
         Search search = esClient().search(new DataBucket("test-fail-deserialize", "typemapped"));
-        search.indexer().index("a", randomDoc());
+        search.indexer().indexJson("a", randomDoc());
         search.get("a", PojoSerialize.class);
+    }
+
+    @Test
+    public void testScrollFullIndex() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        List<Document> docs1 = generateDocuments(100, false)
+                .stream()
+                .map((docStr) -> new Document(UUID.randomUUID().toString(), docStr))
+                .collect(Collectors.toList());
+        List<Document> docs2 = generateDocuments(100, false)
+                .stream()
+                .map((docStr) -> new Document(UUID.randomUUID().toString(), docStr))
+                .collect(Collectors.toList());
+
+        String index = "test-scroll-full-index";
+        client.search(new DataBucket(index, "type1"))
+                .indexer()
+                .bulkIndex(docs1);
+        waitForIndexedDocs(index, 100);
+
+        client.search(new DataBucket(index, "type2"))
+                .indexer()
+                .bulkIndex(docs2);
+        waitForIndexedDocs(index, 200);
+
+        long count = client.search(new DataBucket(index, "typex"))
+                .scrollFullIndex()
+                .count();
+        Assert.assertEquals(200, count);
+        Assert.assertEquals(100, client.search(new DataBucket(index, "type1")).count());
+        Assert.assertEquals(100, client.search(new DataBucket(index, "type2")).count());
     }
 
     @Test
@@ -195,8 +232,8 @@ public class SearchTest extends TestBase {
         Search search = esClient().search(new DataBucket("test-custom-object-mapper", "typemapped"));
         PojoSerialize pojo = new PojoSerialize();
         Instant time = pojo.getTime();
-        String id = search.indexer().index(pojo);
-        JSONObject defaultSerialized = search.getJson(id);
+        String id = search.indexer().indexObject(pojo);
+        JSONObject defaultSerialized = new JSONObject(search.getStr(id));
         Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("nano"), time.getNano());
         Assert.assertEquals(defaultSerialized.getJSONObject("time").getInt("epochSecond"), time.getEpochSecond());
 
@@ -207,12 +244,12 @@ public class SearchTest extends TestBase {
         objectMapper.registerModule(module);
 
         Search search2 = esClient().search(new DataBucket("test-custom-object-mapper2", "typemapped"));
-        search2.setObjectMapper(objectMapper);
-        String newId = search2.indexer().index(pojo);
+        esClient().setObjectMapper(objectMapper);
+        String newId = search2.indexer().indexObject(pojo);
         String str = search2.getStr(newId);
         Assert.assertEquals("{\"time\":\"" + time.toString() + "\"}", str);
         Assert.assertEquals(time, search2.get(newId, PojoSerialize.class).getTime());
-        Assert.assertEquals(time.toString(), search2.getJson(newId).getString("time"));
+        Assert.assertEquals(time.toString(), new JSONObject(search2.getStr(newId)).getString("time"));
     }
 
     public static final class PojoSerialize {

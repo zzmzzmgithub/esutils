@@ -1,5 +1,6 @@
 package com.wirktop.esutils.search;
 
+import com.wirktop.esutils.ElasticSearchClient;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
@@ -16,22 +17,23 @@ public class ScrollIterator implements Iterator<SearchHit> {
     public static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(30);
     public static final int DEFAULT_PAGE_SIZE = 200;
 
-    private Search search;
+    private ElasticSearchClient esClient;
     private String scrollId;
     private SearchResponse currentResponse;
     private long currentIndex;
     private long totalHitCount;
     private int pageSize;
 
-    public ScrollIterator(Search search, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {
-        this.search = search;
+    public ScrollIterator(ElasticSearchClient esClient, SearchRequestBuilder request, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {
+        this.esClient = esClient;
         this.pageSize = pageSize;
 
-        SearchRequestBuilder request = search.searchRequest();
         request.setScroll(keepAlive)
                 .setSize(pageSize)
-                .setFetchSource(fetchSource)
-                .setQuery(query);
+                .setFetchSource(fetchSource);
+        if (query != null) {
+            request.setQuery(query);
+        }
         SearchResponse response = request.execute().actionGet();
         totalHitCount = response.getHits().getTotalHits();
         if (totalHitCount > 0) {
@@ -55,8 +57,7 @@ public class ScrollIterator implements Iterator<SearchHit> {
         SearchHit hit = currentResponse.getHits().getHits()[(int) arrayIndex];
         currentIndex++;
         if (currentIndex % pageSize == 0) {
-            currentResponse = search.client()
-                    .prepareSearchScroll(scrollId)
+            currentResponse = esClient.getClient().prepareSearchScroll(scrollId)
                     .setScroll(DEFAULT_KEEPALIVE)
                     .execute()
                     .actionGet();

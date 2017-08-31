@@ -50,10 +50,10 @@ public class ElasticSearchClientTest extends TestBase {
         Assert.assertEquals(indexesForAlias.iterator().next(), indexBaseName + "_000000000001");
 
         Search search = client.search(bucket);
-        JSONObject document = randomDoc();
-        String newId = search.indexer().index(document);
+        String document = randomDoc();
+        String newId = search.indexer().indexJson(document.toString());
         Map<String, Object> storedDoc = search.getMap(newId);
-        assertSame(document, storedDoc);
+        assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(indexBaseName));
 
         admin.wipe(bucket);
@@ -86,10 +86,10 @@ public class ElasticSearchClientTest extends TestBase {
         Assert.assertEquals(indexesForAlias.iterator().next(), fullPrefix + indexBaseName + "_000000000001");
 
         Search search = client.search(bucket);
-        JSONObject document = randomDoc();
-        String newId = search.indexer().index(document);
+        String document = randomDoc();
+        String newId = search.indexer().indexJson(document);
         Map<String, Object> storedDoc = search.getMap(newId);
-        assertSame(document, storedDoc);
+        assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
 
         admin.wipe(bucket);

@@ -1,5 +1,7 @@
 package com.wirktop.esutils;
 
+import com.wirktop.esutils.index.IndexBatch;
+import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
@@ -16,7 +18,6 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateActio
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
@@ -39,11 +40,12 @@ import java.util.concurrent.ExecutionException;
 public class Admin {
 
     private static final Logger log = LoggerFactory.getLogger(Admin.class);
+    private static final String ANYTYPE = "ANYTYPE";
 
-    private Client client;
+    private ElasticSearchClient esClient;
 
-    public Admin(Client client) {
-        this.client = client;
+    public Admin(ElasticSearchClient esClient) {
+        this.esClient = esClient;
     }
 
     public static void checkResponse(AcknowledgedResponse response) {
@@ -55,7 +57,10 @@ public class Admin {
     public void createTemplate(String templateName, String jsonContent) {
         try {
             PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);
-            PutIndexTemplateResponse response = client.admin().indices().execute(PutIndexTemplateAction.INSTANCE, request).get();
+            PutIndexTemplateResponse response = esClient.getClient().admin()
+                    .indices()
+                    .execute(PutIndexTemplateAction.INSTANCE, request)
+                    .get();
             checkResponse(response);
             log.info("Created template {}", templateName);
         } catch (InterruptedException | ExecutionException e) {
@@ -83,7 +88,7 @@ public class Admin {
     }
 
     public void wipe(AliasWrappedBucket dataBucket) {
-        dataBucket.wipe(this, 0);
+        wipe(dataBucket, 0);
     }
 
     public void wipe(AliasWrappedBucket dataBucket, int shards) {
@@ -104,9 +109,19 @@ public class Admin {
                 request = request.settings(settings);
             }
 
-            CreateIndexResponse response = client.admin().indices().create(request).actionGet();
+            CreateIndexResponse response = esClient.getClient()
+                    .admin()
+                    .indices()
+                    .create(request)
+                    .actionGet();
             checkResponse(response);
-            final RefreshResponse refresh = client.admin().indices().prepareRefresh(index).execute().actionGet();
+            final RefreshResponse refresh = esClient
+                    .getClient()
+                    .admin()
+                    .indices()
+                    .prepareRefresh(index)
+                    .execute()
+                    .actionGet();
             if (refresh.getSuccessfulShards() < 1) {
                 throw new SearchException(String.format("Index fail in %s shards.", refresh.getFailedShards()));
             }
@@ -117,7 +132,8 @@ public class Admin {
     }
 
     public boolean aliasExists(String aliasName) {
-        AliasesExistResponse response = client.admin()
+        AliasesExistResponse response = esClient.getClient()
+                .admin()
                 .indices()
                 .prepareAliasesExist(aliasName)
                 .execute()
@@ -130,7 +146,8 @@ public class Admin {
     }
 
     public void createAlias(String aliasName, QueryBuilder filter, String... indices) {
-        IndicesAliasesRequestBuilder req = client.admin()
+        IndicesAliasesRequestBuilder req = esClient.getClient()
+                .admin()
                 .indices()
                 .prepareAliases();
         if (filter != null) {
@@ -144,14 +161,16 @@ public class Admin {
 
     public void removeAlias(String alias) {
         GetAliasesRequest request = new GetAliasesRequest(alias);
-        GetAliasesResponse response = client.admin()
+        GetAliasesResponse response = esClient.getClient()
+                .admin()
                 .indices()
                 .getAliases(request)
                 .actionGet();
         ImmutableOpenMap<String, List<AliasMetaData>> aliases = response.getAliases();
         if (!aliases.isEmpty()) {
             String[] indices = aliases.keys().toArray(String.class);
-            IndicesAliasesResponse removeResponse = client.admin()
+            IndicesAliasesResponse removeResponse = esClient.getClient()
+                    .admin()
                     .indices()
                     .prepareAliases()
                     .removeAlias(indices, alias)
@@ -162,7 +181,8 @@ public class Admin {
 
     public Collection<String> indexesForAlias(String alias) {
         GetAliasesRequest r = new GetAliasesRequest(alias);
-        GetAliasesResponse response = client.admin()
+        GetAliasesResponse response = esClient.getClient()
+                .admin()
                 .indices()
                 .getAliases(r)
                 .actionGet();
@@ -170,7 +190,8 @@ public class Admin {
     }
 
     public boolean indexExists(String index) {
-        IndicesExistsResponse response = client.admin()
+        IndicesExistsResponse response = esClient.getClient()
+                .admin()
                 .indices()
                 .prepareExists(index)
                 .execute()
@@ -180,10 +201,20 @@ public class Admin {
 
     public void removeIndex(String index) {
         DeleteIndexRequest deleteRequest = new DeleteIndexRequest(index);
-        DeleteIndexResponse response = client.admin()
+        DeleteIndexResponse response = esClient.getClient()
+                .admin()
                 .indices()
                 .delete(deleteRequest)
                 .actionGet();
         checkResponse(response);
+    }
+
+    public void copyData(String srcIndex, String targetIndex) {
+        Search targetSearch = esClient.search(new DataBucket(targetIndex, ANYTYPE));
+        try (IndexBatch batch = targetSearch.indexer().batch(100)) {
+            esClient.search(new DataBucket(srcIndex, ANYTYPE))
+                    .scrollFullIndex()
+                    .forEach((hit) -> batch.add(hit.getId(), hit.getSourceAsString()));
+        }
     }
 }

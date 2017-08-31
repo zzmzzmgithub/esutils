@@ -10,6 +10,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Marginean
@@ -124,5 +127,30 @@ public class AdminTest extends TestBase {
         Assert.assertTrue(males > 0);
         Assert.assertTrue(females > 0);
         Assert.assertEquals(100, females + males);
+    }
+
+    @Test
+    public void testCopyIndex() throws Exception {
+        ElasticSearchClient client = new ElasticSearchClient(client());
+        Admin admin = client.admin();
+
+        int count = 319;
+        List<Document> docs1 = generateDocuments(count, false)
+                .stream()
+                .map((docStr) -> new Document(UUID.randomUUID().toString(), docStr))
+                .collect(Collectors.toList());
+
+        String index = "index-test-copy";
+        Search search = client.search(new DataBucket(index, "type1"));
+        search.indexer().bulkIndex(docs1);
+        waitForIndexedDocs(index, count);
+        Assert.assertEquals(count, search.count());
+
+        String cloneIndex = "index-test-copy-clone";
+        admin.copyData(search.bucket().getIndex(), cloneIndex);
+        waitForIndexedDocs(cloneIndex, count);
+        Assert.assertEquals(count, client.search(new DataBucket(index, "type1")).count());
+        Assert.assertEquals(0, client.search(new DataBucket(index, "typex")).count());
+        Assert.assertEquals(0, client.search(new DataBucket(index, "21370123123")).count());
     }
 }

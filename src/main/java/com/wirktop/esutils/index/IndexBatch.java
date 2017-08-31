@@ -1,51 +1,47 @@
 package com.wirktop.esutils.index;
 
-import org.json.JSONObject;
+import com.wirktop.esutils.Document;
+import com.wirktop.esutils.Json;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Cosmin Marginean
  */
 public class IndexBatch implements AutoCloseable {
 
-    protected Indexer indexer;
-    protected String idField;
-    protected List<Map<String, Object>> documents = new ArrayList<>();
+    private Indexer indexer;
+    private Json json;
+    private List<Document> documents = new ArrayList<>();
     private int size;
 
-    public IndexBatch(Indexer indexer, int size, String idField) {
+    protected IndexBatch(Indexer indexer, Json json, int size) {
         this.indexer = indexer;
+        this.json = json;
         this.size = size;
-        this.idField = idField;
     }
 
-    public void add(JSONObject document) {
-        add(document.toMap());
+    public void addPojo(String id, Object pojo) {
+        add(id, json.toString(pojo));
     }
 
-    public void add(String jsonDocStr) {
-        add(new JSONObject(jsonDocStr).toMap());
-    }
-
-    public void add(Map<String, Object> document) {
-        documents.add(document);
+    public void add(String id, String documentJson) {
+        documents.add(new Document(id, documentJson));
         if (documents.size() == size) {
             bulkIndex();
         }
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (documents.size() > 0) {
             bulkIndex();
         }
     }
 
     private void bulkIndex() {
-        indexer.bulkIndex(documents, idField);
+        indexer.bulkIndex(documents);
         documents.clear();
     }
 }

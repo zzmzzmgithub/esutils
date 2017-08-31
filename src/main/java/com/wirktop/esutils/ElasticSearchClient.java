@@ -1,5 +1,6 @@
 package com.wirktop.esutils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -22,6 +23,7 @@ public class ElasticSearchClient {
 
     private Client client;
     private Admin admin;
+    private Json json = new Json(new ObjectMapper());
 
     /**
      * @param nodes       A collection of hostname:port elements
@@ -37,7 +39,7 @@ public class ElasticSearchClient {
         }
 
         this.client = client;
-        admin = new Admin(client);
+        admin = new Admin(this);
     }
 
     private static Client transportClient(Collection<String> nodes, String clusterName) {
@@ -66,10 +68,22 @@ public class ElasticSearchClient {
     }
 
     public Search search(DataBucket bucket) {
-        return new Search(client, bucket);
+        return new Search(this, bucket);
     }
 
     public Admin admin() {
         return admin;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        json = new Json(objectMapper);
+    }
+
+    public Json json() {
+        return json;
     }
 }

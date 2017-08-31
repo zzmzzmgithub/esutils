@@ -51,6 +51,7 @@ Search search = esClient.search(dataBucket);
 https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
+SomePojo document = ...
 search.indexer().index(document);
 search.indexer().index(id, document);
 search.indexer().index(id, document, true);
@@ -58,29 +59,17 @@ search.indexer().index(id, document, true);
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
 The `index()` methods always return the `_id` of the newly indexed document.
 
-The `document` object can be one of the following:
-* `Map<String,Object>`
-* `org.json.JSONObject`
-* `String` (the JSON string for this document)
-* Any Java object (this would serialize it to JSON)
-
 #### Bulk index documents
 ```
-Collection<JSONObject> jsonDocs = ...
-search.indexer().bulkIndexJson(jsonDocs);
-search.indexer().bulkIndexJson(jsonDocs, "myId"); // Pass an _id field to index with
-
-Collection<Map<String,Object> documentsMap = ...
-search.indexer().bulkIndex(documentsMap);
-search.indexer().bulkIndex(documentsMap, "myId"); // Pass an _id field to index with
+Collection<Document> documents = ...
+search.indexer().bulkIndex(documents);
 ```
-Note: The id field is checked against each document and only applied when found and of type `String` (no error reported when inconsistent).
 
 #### Batch indexing
 This is a useful mechanism to index a `Stream` or any other potentially unbounded data set.
 `IndexBatch` implements `AutoCloseable` which means it requires no cleanup (i.e. bulk-indexing the last items that might not be a complete batch) 
 ```
-Stream<JSONObject> docs = ...
+Stream<Map<String,Object>> docs = ...
 try (IndexBatch batch = indexer.batch(100)) {
     docs.forEach((doc) -> batch.add(doc));
 }
@@ -99,7 +88,6 @@ search.scroll(QueryBuilders.matchAllQuery())
 
 // Seaveral get by _id methods
 Map<String, Object> map = search.getMap(id);
-JSONObject json = search.getJson(id);
 String jsonDoc = search.getStr(id);
 TestPojo pojo = search.get(id, TestPojo.class);
 ```
