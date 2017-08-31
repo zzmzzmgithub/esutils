@@ -8,39 +8,36 @@ import java.util.regex.Pattern;
  */
 public class AliasWrappedBucket extends DataBucket {
 
-    private Admin admin;
-
-    public AliasWrappedBucket(String index, String type, Admin admin) {
+    public AliasWrappedBucket(String index, String type) {
         super(index, type);
-        this.admin = admin;
     }
 
     @Override
-    public void createIndex(Admin admin, int shards) {
+    protected void createIndex(Admin admin, int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex(alias);
+        String crtIndex = actualIndex(admin, alias);
         if (crtIndex == null || !admin.indexExists(crtIndex)) {
-            String nextIndex = nextIndexVersion(alias);
+            String nextIndex = nextIndexVersion(admin, alias);
             admin.createIndex(nextIndex, shards);
             admin.createAlias(alias, nextIndex);
         }
     }
 
-    public void wipe() {
+    protected void wipe(Admin admin, int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex(alias);
-        String nextIndex = nextIndexVersion(alias);
+        String crtIndex = actualIndex(admin, alias);
+        String nextIndex = nextIndexVersion(admin, alias);
         admin.removeAlias(alias);
         if (crtIndex != null && admin.indexExists(crtIndex)) {
             admin.removeIndex(crtIndex);
         }
 
-        admin.createIndex(nextIndex);
+        admin.createIndex(nextIndex, shards);
         admin.removeAlias(alias);
         admin.createAlias(alias, nextIndex);
     }
 
-    private String actualIndex(String aliasWrapper) {
+    private String actualIndex(Admin admin, String aliasWrapper) {
         Collection<String> indices = admin.indexesForAlias(aliasWrapper);
         Pattern pattern = Pattern.compile(aliasWrapper + "_\\d{12}");
         for (String index : indices) {
@@ -51,7 +48,7 @@ public class AliasWrappedBucket extends DataBucket {
         return null;
     }
 
-    private String nextIndexVersion(String aliasWrapper) {
+    private String nextIndexVersion(Admin admin, String aliasWrapper) {
         Collection<String> indices = admin.indexesForAlias(aliasWrapper);
         long crtVersion = 0;
         for (String index : indices) {

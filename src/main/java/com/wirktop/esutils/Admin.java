@@ -74,6 +74,22 @@ public class Admin {
         }
     }
 
+    public void createIndex(DataBucket dataBucket) {
+        dataBucket.createIndex(this);
+    }
+
+    public void createIndex(DataBucket dataBucket, int shards) {
+        dataBucket.createIndex(this, shards);
+    }
+
+    public void wipe(AliasWrappedBucket dataBucket) {
+        dataBucket.wipe(this, 0);
+    }
+
+    public void wipe(AliasWrappedBucket dataBucket, int shards) {
+        dataBucket.wipe(this, shards);
+    }
+
     public void createIndex(String index) {
         createIndex(index, 0);
     }

@@ -175,10 +175,10 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testCustomBucket() throws Exception {
-        Search search = esClient().search(new TenantBucket("private-tenant-index", "mytype", "tenant1"));
+        Search search = esClient().search(new CustomBucket("private-custom-index", "mytype", "custom1"));
         JSONObject document = randomDoc();
         String id = search.indexer().index(document);
-        Map<String, Object> indexedDoc = getMap("tenant1---private-tenant-index", "mytype", id);
+        Map<String, Object> indexedDoc = getMap("custom1---private-custom-index", "mytype", id);
         Assert.assertNotNull(indexedDoc);
         assertSame(document, indexedDoc);
     }
@@ -227,19 +227,19 @@ public class SearchTest extends TestBase {
         }
     }
 
-    private static class TenantBucket extends DataBucket {
+    private static class CustomBucket extends DataBucket {
 
-        private String tenantId;
+        private String prefix;
 
-        public TenantBucket(String index, String type, String tenantId) {
+        public CustomBucket(String index, String type, String prefix) {
             super(index, type);
-            this.tenantId = tenantId;
+            this.prefix = prefix;
         }
 
         @Override
         public String getIndex() {
             String index = super.getIndex();
-            String prefix = tenantId + "---";
+            String prefix = this.prefix + "---";
             return index.startsWith(prefix) ? index : prefix + index;
         }
     }

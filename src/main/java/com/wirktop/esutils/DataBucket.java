@@ -20,11 +20,11 @@ public class DataBucket {
         this.type = type;
     }
 
-    public void createIndex(Admin admin) {
+    protected void createIndex(Admin admin) {
         createIndex(admin, 0);
     }
 
-    public void createIndex(Admin admin, int shards) {
+    protected void createIndex(Admin admin, int shards) {
         admin.createIndex(index, shards);
     }
 

@@ -31,10 +31,6 @@ public class ElasticSearchClient {
         this(transportClient(nodes, clusterName));
     }
 
-    public AliasWrappedBucket aliasWrapped(DataBucket dataBucket) {
-        return new AliasWrappedBucket(dataBucket.getIndex(), dataBucket.getType(), admin);
-    }
-
     public ElasticSearchClient(Client client) {
         if (client == null) {
             throw new IllegalArgumentException("client argument cannot be null");
