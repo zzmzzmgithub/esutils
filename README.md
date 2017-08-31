@@ -2,7 +2,7 @@
 
 ## About
 **esutils** is a Java library that aims to make interaction with ElasticSearch a bit more fluent.
-* Javadocs: https://wirktop.github.io/esutils/etc/javadoc/ 
+* Javadocs: https://wirktop.github.io/esutils/etc/apidocs/ 
 * Code coverage: https://wirktop.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 
@@ -49,7 +49,7 @@ Search search = esClient.search(dataBucket);
 ```
 
 ## Indexing
-https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/index/Indexer.html
+https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
 SomePojo document = ...
@@ -59,6 +59,9 @@ search.indexer().index(id, document, true);
 ```
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
 The `index()` methods always return the `_id` of the newly indexed document.
+
+Certain index methods accept a `Document` index which is a simple container for both an ID and the content of the document.
+For bulk indexing this is particularly important, where passing an ID for each document might be required.
 
 #### Bulk index documents
 ```
@@ -77,7 +80,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 ```
 
 ## Searching
-https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/search/Search.html
+https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html
 ```
 // Search (ES _search)
 search.seach(QueryBuilders.matchAllQuery(), 10)
@@ -94,7 +97,7 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
-https://wirktop.github.io/esutils/etc/javadoc/com/wirktop/esutils/admin/Admin.html
+https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/admin/Admin.html
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
 Admin admin = client.admin();
