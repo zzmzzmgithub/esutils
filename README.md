@@ -41,7 +41,10 @@ ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost
 ```
 ElasticSearchClient esClient = ...
 DataBucket dataBucket = new DataBucket("index1", "type1")
-esClient.admin().createIndex(dataBucket); // Option to create index by passing a DataBucket - the recommended approach
+
+// The recommended approach to create an index when using DataBuckets 
+esClient.admin().createIndex(dataBucket);
+
 Search search = esClient.search(dataBucket); 
 ```
 
