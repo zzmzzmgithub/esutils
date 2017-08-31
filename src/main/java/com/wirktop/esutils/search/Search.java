@@ -110,9 +110,8 @@ public class Search {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
-    public Stream<SearchHit> scrollFullIndex() {
-        SearchRequestBuilder request = esClient.getClient()
-                .prepareSearch(bucket.getIndex());
+    public static Stream<SearchHit> scrollIndex(ElasticSearchClient esClient, String index) {
+        SearchRequestBuilder request = esClient.getClient().prepareSearch(index);
         ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }

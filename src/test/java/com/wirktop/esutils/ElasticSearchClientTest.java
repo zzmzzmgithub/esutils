@@ -70,6 +70,22 @@ public class ElasticSearchClientTest extends TestBase {
     }
 
     @Test
+    public void testAliasWrappedRefresh() throws Exception {
+        ElasticSearchClient client = esClient();
+        String indexBaseName = "aliaswrappedrefresh";
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "mytype");
+        Admin admin = client.admin();
+        admin.createIndex(bucket);
+
+        Search search = client.search(bucket);
+        indexStructuredDocs(267, search);
+        waitForIndexedDocs(indexBaseName, 267);
+        admin.refresh(bucket, 5);
+        Thread.sleep(1000);
+        Assert.assertEquals(267, search.count());
+    }
+
+    @Test
     public void testAliasWrappedCustom() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrappedcustom";

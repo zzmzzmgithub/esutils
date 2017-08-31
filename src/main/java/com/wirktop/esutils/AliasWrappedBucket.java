@@ -27,14 +27,19 @@ public class AliasWrappedBucket extends DataBucket {
         String alias = getIndex();
         String crtIndex = actualIndex(admin, alias);
         String nextIndex = nextIndexVersion(admin, alias);
-        admin.removeAlias(alias);
-        if (crtIndex != null && admin.indexExists(crtIndex)) {
-            admin.removeIndex(crtIndex);
-        }
-
         admin.createIndex(nextIndex, shards);
-        admin.removeAlias(alias);
-        admin.createAlias(alias, nextIndex);
+        admin.moveAlias(alias, crtIndex, nextIndex);
+        admin.removeIndex(crtIndex);
+    }
+
+    protected void refresh(Admin admin, int shards) {
+        String alias = getIndex();
+        String crtIndex = actualIndex(admin, alias);
+        String nextIndex = nextIndexVersion(admin, alias);
+        admin.createIndex(nextIndex, shards);
+        admin.copyData(crtIndex, nextIndex);
+        admin.moveAlias(alias, crtIndex, nextIndex);
+        admin.removeIndex(crtIndex);
     }
 
     private String actualIndex(Admin admin, String aliasWrapper) {

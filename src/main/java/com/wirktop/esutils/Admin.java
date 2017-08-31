@@ -1,6 +1,5 @@
 package com.wirktop.esutils;
 
-import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
@@ -14,25 +13,30 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author Cosmin Marginean
@@ -41,6 +45,8 @@ public class Admin {
 
     private static final Logger log = LoggerFactory.getLogger(Admin.class);
     private static final String ANYTYPE = "ANYTYPE";
+    public static final String INDEX_NUMBER_OF_SHARDS = "index.number_of_shards";
+    public static final int DATA_COPY_BATCH_SIZE = 100;
 
     private ElasticSearchClient esClient;
 
@@ -48,25 +54,14 @@ public class Admin {
         this.esClient = esClient;
     }
 
-    public static void checkResponse(AcknowledgedResponse response) {
-        if (!response.isAcknowledged()) {
-            throw new SearchException("Error executing Elasticsearch request");
-        }
-    }
-
     public void createTemplate(String templateName, String jsonContent) {
-        try {
-            PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);
-            PutIndexTemplateResponse response = esClient.getClient().admin()
-                    .indices()
-                    .execute(PutIndexTemplateAction.INSTANCE, request)
-                    .get();
-            checkResponse(response);
-            log.info("Created template {}", templateName);
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage(), e);
-            throw new SearchException(e.getMessage(), e);
-        }
+        PutIndexTemplateRequest request = new PutIndexTemplateRequest(templateName).source(jsonContent, XContentType.JSON);
+        PutIndexTemplateResponse response = esClient.getClient().admin()
+                .indices()
+                .execute(PutIndexTemplateAction.INSTANCE, request)
+                .actionGet();
+        checkResponse(response);
+        log.info("Created template {}", templateName);
     }
 
     public void createTemplate(String templateName, InputStream jsonInput) {
@@ -89,6 +84,10 @@ public class Admin {
 
     public void wipe(AliasWrappedBucket dataBucket) {
         wipe(dataBucket, 0);
+    }
+
+    public void refresh(AliasWrappedBucket dataBucket, int shards) {
+        dataBucket.refresh(this, shards);
     }
 
     public void wipe(AliasWrappedBucket dataBucket, int shards) {
@@ -159,6 +158,16 @@ public class Admin {
         checkResponse(response);
     }
 
+    public void moveAlias(String alias, String fromIndex, String toIndex) {
+        IndicesAliasesResponse response = esClient.getClient().admin()
+                .indices()
+                .prepareAliases()
+                .removeAlias(fromIndex, alias)
+                .addAlias(toIndex, alias)
+                .execute().actionGet();
+        checkResponse(response);
+    }
+
     public void removeAlias(String alias) {
         GetAliasesRequest request = new GetAliasesRequest(alias);
         GetAliasesResponse response = esClient.getClient()
@@ -176,6 +185,12 @@ public class Admin {
                     .removeAlias(indices, alias)
                     .execute().actionGet();
             checkResponse(removeResponse);
+        }
+    }
+
+    private static void checkResponse(AcknowledgedResponse response) {
+        if (!response.isAcknowledged()) {
+            throw new SearchException("Error executing Elasticsearch request");
         }
     }
 
@@ -210,11 +225,48 @@ public class Admin {
     }
 
     public void copyData(String srcIndex, String targetIndex) {
-        Search targetSearch = esClient.search(new DataBucket(targetIndex, ANYTYPE));
-        try (IndexBatch batch = targetSearch.indexer().batch(100)) {
-            esClient.search(new DataBucket(srcIndex, ANYTYPE))
-                    .scrollFullIndex()
-                    .forEach((hit) -> batch.add(hit.getId(), hit.getSourceAsString()));
+        List<SearchHit> hits = new ArrayList<>();
+        Search.scrollIndex(esClient, srcIndex)
+                .forEach((hit) -> {
+                    hits.add(hit);
+                    if (hits.size() == DATA_COPY_BATCH_SIZE) {
+                        bulkIndex(hits, targetIndex);
+                        hits.clear();
+                    }
+                });
+        bulkIndex(hits, targetIndex);
+    }
+
+    private void bulkIndex(List<SearchHit> hits, String targetIndex) {
+        if (hits.size() > 0) {
+            BulkRequestBuilder request = esClient.getClient().prepareBulk();
+            for (SearchHit hit : hits) {
+                IndexRequestBuilder indexRequest = esClient.getClient()
+                        .prepareIndex()
+                        .setIndex(targetIndex)
+                        .setType(hit.getType())
+                        .setId(hit.getId())
+                        .setSource(hit.getSourceAsString(), XContentType.JSON);
+                request.add(indexRequest);
+            }
+            BulkResponse response = request.execute().actionGet();
+            if (response.hasFailures()) {
+                throw new SearchException("Could not index all documents. Error message is: " + response.buildFailureMessage());
+            }
         }
+    }
+
+
+    public int getShards(String index) {
+        GetSettingsResponse response = esClient.getClient()
+                .admin()
+                .indices()
+                .prepareGetSettings(index)
+                .get();
+        ImmutableOpenMap<String, Settings> settings = response.getIndexToSettings();
+        if (!settings.containsKey(index)) {
+            throw new SearchException("Could not find settings for index " + index);
+        }
+        return settings.get(index).getAsInt(INDEX_NUMBER_OF_SHARDS, null);
     }
 }

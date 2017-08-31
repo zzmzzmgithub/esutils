@@ -219,8 +219,7 @@ public class SearchTest extends TestBase {
                 .bulkIndex(docs2);
         waitForIndexedDocs(index, 200);
 
-        long count = client.search(new DataBucket(index, "typex"))
-                .scrollFullIndex()
+        long count = Search.scrollIndex(esClient(), index)
                 .count();
         Assert.assertEquals(200, count);
         Assert.assertEquals(100, client.search(new DataBucket(index, "type1")).count());
