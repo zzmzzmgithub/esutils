@@ -59,7 +59,7 @@ public class AdminTest extends TestBase {
         Admin admin = client.admin();
         String index = "createindextest-bucket";
         Assert.assertFalse(admin.indexExists(index));
-        new DataBucket(index, "notype").createIndex(admin, 7);
+        admin.createIndex(new DataBucket(index, "notype"), 7);
         Assert.assertTrue(admin.indexExists(index));
 
         JSONObject json = new JSONObject(httpClient().target("http://localhost:9200/" + index).request().get().readEntity(String.class));
