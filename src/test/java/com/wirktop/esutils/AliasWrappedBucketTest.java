@@ -117,7 +117,7 @@ public class AliasWrappedBucketTest extends TestBase {
         esClient().search(newBucket).indexer().indexJson(randomDoc());
         esClient().search(newBucket).indexer().indexJson(randomDoc());
         waitForIndexedDocs(newBucket.getIndex(), 3);
-        AliasWrappedBucket newWrappedBucket = bucket.moveTo(newBucket, true);
+        AliasWrappedBucket newWrappedBucket = bucket.wrap(newBucket, true);
         Assert.assertFalse(esClient().admin().indexExists(index));
         Assert.assertEquals(3, esClient().search(newWrappedBucket).count());
     }

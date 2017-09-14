@@ -58,10 +58,10 @@ public class AliasWrappedBucket extends DataBucket {
         return dataBucket;
     }
 
-    public AliasWrappedBucket moveTo(DataBucket dataBucket, boolean deleteOldIndex) {
+    public AliasWrappedBucket wrap(DataBucket dataBucket, boolean deleteCurrentIndex) {
         String oldIndex = actualIndex();
         getAdmin().moveAlias(getIndex(), oldIndex, dataBucket.getIndex());
-        if (deleteOldIndex) {
+        if (deleteCurrentIndex) {
             getAdmin().removeIndex(oldIndex);
         }
         return this;
