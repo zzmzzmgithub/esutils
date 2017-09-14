@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,28 +75,26 @@ public class Admin {
         }
     }
 
-    public void createIndex(DataBucket dataBucket) {
-        dataBucket.createIndex(this);
-    }
-
-    public void createIndex(DataBucket dataBucket, int shards) {
-        dataBucket.createIndex(this, shards);
-    }
-
-    public void wipe(AliasWrappedBucket dataBucket) {
-        wipe(dataBucket, 0);
-    }
-
-    public void refresh(AliasWrappedBucket dataBucket, int shards) {
-        dataBucket.refresh(this, shards);
-    }
-
-    public void wipe(AliasWrappedBucket dataBucket, int shards) {
-        dataBucket.wipe(this, shards);
-    }
-
     public void createIndex(String index) {
         createIndex(index, 0);
+    }
+
+    public DataBucket bucket(String index, String type) {
+        return new DataBucket(this, index, type);
+    }
+
+    public AliasWrappedBucket aliasWrappedBucket(String index, String type) {
+        return new AliasWrappedBucket(this, index, type);
+    }
+
+    public <T extends DataBucket> T bucket(String index, String type, Class<T> bucketClass) {
+        try {
+            return bucketClass.getConstructor(Admin.class, String.class, String.class)
+                    .newInstance(this, index, type);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            log.error(e.getMessage(), e);
+            throw new SearchException(e.getMessage(), e);
+        }
     }
 
     public void createIndex(String index, int shards) {

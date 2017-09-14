@@ -20,6 +20,28 @@ import java.util.stream.Collectors;
 public class AdminTest extends TestBase {
 
     @Test
+    public void testCreateBuckets() throws Exception {
+        DataBucket bucket = esClient().admin().bucket("index", "type");
+        Assert.assertEquals("index", bucket.getIndex());
+        Assert.assertEquals("type", bucket.getType());
+
+        AliasWrappedBucket aliasWrappedBucket = esClient().admin().aliasWrappedBucket("wrappedindex", "wrappedtype");
+        Assert.assertEquals("wrappedindex", aliasWrappedBucket.getIndex());
+        Assert.assertEquals("wrappedtype", aliasWrappedBucket.getType());
+
+        MyBucket myBucket = esClient().admin().bucket("customindex", "customtype", MyBucket.class);
+        Assert.assertEquals("customindex", myBucket.getIndex());
+        Assert.assertEquals("customtype", myBucket.getType());
+    }
+
+    public static final class MyBucket extends DataBucket {
+
+        public MyBucket(Admin admin, String index, String type) {
+            super(admin, index, type);
+        }
+    }
+
+    @Test
     public void testCreateTemplate() throws Exception {
         ElasticSearchClient client = new ElasticSearchClient(client());
         String template = "mytemplate";
@@ -62,7 +84,7 @@ public class AdminTest extends TestBase {
         Admin admin = client.admin();
         String index = "createindextest-bucket";
         Assert.assertFalse(admin.indexExists(index));
-        admin.createIndex(new DataBucket(index, "notype"), 7);
+        esClient().admin().bucket(index, "notype").createIndex(7);
         Assert.assertTrue(admin.indexExists(index));
 
         JSONObject json = new JSONObject(httpClient().target("http://localhost:9200/" + index).request().get().readEntity(String.class));
@@ -113,17 +135,17 @@ public class AdminTest extends TestBase {
     public void testCreateAliasWithFilter() throws Exception {
         ElasticSearchClient client = new ElasticSearchClient(client());
         Admin admin = client.admin();
-        esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
+        esClient().admin().createTemplate("index", getClass().getResourceAsStream("/templates/template-index.json"));
         String index = "testcreatealiaswithfilter";
         admin.createIndex(index);
-        Search search = client.search(new DataBucket(index, "type"));
+        Search search = client.search(esClient().admin().bucket(index, "type"));
         indexStructuredDocs(100, search);
         waitForIndexedDocs(index, 100);
         admin.createAlias("males-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "male"), index);
         admin.createAlias("females-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "female"), index);
 
-        long males = client.search(new DataBucket("males-testcreatealiaswithfilter", "type")).count();
-        long females = client.search(new DataBucket("females-testcreatealiaswithfilter", "type")).count();
+        long males = client.search(esClient().admin().bucket("males-testcreatealiaswithfilter", "type")).count();
+        long females = client.search(esClient().admin().bucket("females-testcreatealiaswithfilter", "type")).count();
         Assert.assertTrue(males > 0);
         Assert.assertTrue(females > 0);
         Assert.assertEquals(100, females + males);
@@ -163,7 +185,8 @@ public class AdminTest extends TestBase {
                 .collect(Collectors.toList());
 
         String index = "index-test-copy";
-        Search search = client.search(new DataBucket(index, "type1"));
+
+        Search search = client.search(esClient().admin().bucket(index, "type1"));
         search.indexer().bulkIndex(docs1);
         waitForIndexedDocs(index, count);
         Assert.assertEquals(count, search.count());
@@ -171,8 +194,8 @@ public class AdminTest extends TestBase {
         String cloneIndex = "index-test-copy-clone";
         admin.copyData(search.bucket().getIndex(), cloneIndex);
         waitForIndexedDocs(cloneIndex, count);
-        Assert.assertEquals(count, client.search(new DataBucket(index, "type1")).count());
-        Assert.assertEquals(0, client.search(new DataBucket(index, "typex")).count());
-        Assert.assertEquals(0, client.search(new DataBucket(index, "21370123123")).count());
+        Assert.assertEquals(count, client.search(esClient().admin().bucket(index, "type1")).count());
+        Assert.assertEquals(0, client.search(esClient().admin().bucket(index, "typex")).count());
+        Assert.assertEquals(0, client.search(esClient().admin().bucket(index, "21370123123")).count());
     }
 }

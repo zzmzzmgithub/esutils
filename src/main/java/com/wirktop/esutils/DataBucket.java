@@ -7,8 +7,12 @@ public class DataBucket {
 
     private String index;
     private String type;
+    private Admin admin;
 
-    public DataBucket(String index, String type) {
+    protected DataBucket(Admin admin, String index, String type) {
+        if (admin == null) {
+            throw new IllegalArgumentException("admin argument cannot be null");
+        }
         if (index == null) {
             throw new IllegalArgumentException("index argument cannot be null");
         }
@@ -16,15 +20,20 @@ public class DataBucket {
             throw new IllegalArgumentException("type argument cannot be null");
         }
 
+        this.admin = admin;
         this.index = index;
         this.type = type;
     }
 
-    protected void createIndex(Admin admin) {
-        createIndex(admin, 0);
+    protected Admin getAdmin() {
+        return admin;
     }
 
-    protected void createIndex(Admin admin, int shards) {
+    protected void createIndex() {
+        createIndex(0);
+    }
+
+    protected void createIndex(int shards) {
         admin.createIndex(index, shards);
     }
 

@@ -1,6 +1,7 @@
 package com.wirktop.esutils;
 
 import java.util.Collection;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -8,43 +9,67 @@ import java.util.regex.Pattern;
  */
 public class AliasWrappedBucket extends DataBucket {
 
-    public AliasWrappedBucket(String index, String type) {
-        super(index, type);
+    protected AliasWrappedBucket(Admin admin, String index, String type) {
+        super(admin, index, type);
     }
 
     @Override
-    protected void createIndex(Admin admin, int shards) {
+    protected void createIndex(int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex(admin, alias);
-        if (crtIndex == null || !admin.indexExists(crtIndex)) {
-            String nextIndex = nextIndexVersion(admin, alias);
-            admin.createIndex(nextIndex, shards);
-            admin.createAlias(alias, nextIndex);
+        String crtIndex = actualIndex();
+        if (crtIndex == null || !getAdmin().indexExists(crtIndex)) {
+            String nextIndex = newIndexName();
+            getAdmin().createIndex(nextIndex, shards);
+            getAdmin().createAlias(alias, nextIndex);
         }
     }
 
-    protected void wipe(Admin admin, int shards) {
-        String alias = getIndex();
-        String crtIndex = actualIndex(admin, alias);
-        String nextIndex = nextIndexVersion(admin, alias);
-        admin.createIndex(nextIndex, shards);
-        admin.moveAlias(alias, crtIndex, nextIndex);
-        admin.removeIndex(crtIndex);
+    protected void wipe() {
+        wipe(0);
     }
 
-    protected void refresh(Admin admin, int shards) {
+    public void wipe(int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex(admin, alias);
-        String nextIndex = nextIndexVersion(admin, alias);
-        admin.createIndex(nextIndex, shards);
-        admin.copyData(crtIndex, nextIndex);
-        admin.moveAlias(alias, crtIndex, nextIndex);
-        admin.removeIndex(crtIndex);
+        String crtIndex = actualIndex();
+        String nextIndex = newIndexName();
+        getAdmin().createIndex(nextIndex, shards);
+        getAdmin().moveAlias(alias, crtIndex, nextIndex);
+        getAdmin().removeIndex(crtIndex);
     }
 
-    private String actualIndex(Admin admin, String aliasWrapper) {
-        Collection<String> indices = admin.indexesForAlias(aliasWrapper);
-        Pattern pattern = Pattern.compile(aliasWrapper + "_\\d{12}");
+    public void refresh(int shards) {
+        String alias = getIndex();
+        String crtIndex = actualIndex();
+        String nextIndex = newIndexName();
+        getAdmin().createIndex(nextIndex, shards);
+        getAdmin().copyData(crtIndex, nextIndex);
+        getAdmin().moveAlias(alias, crtIndex, nextIndex);
+        getAdmin().removeIndex(crtIndex);
+    }
+
+    public DataBucket createNewIndex() {
+        return createNewIndex(0);
+    }
+
+    public DataBucket createNewIndex(int shards) {
+        String index = newIndexName();
+        DataBucket dataBucket = new DataBucket(getAdmin(), index, getType());
+        getAdmin().createIndex(index, shards);
+        return dataBucket;
+    }
+
+    public AliasWrappedBucket moveTo(DataBucket dataBucket, boolean deleteOldIndex) {
+        String oldIndex = actualIndex();
+        getAdmin().moveAlias(getIndex(), oldIndex, dataBucket.getIndex());
+        if (deleteOldIndex) {
+            getAdmin().removeIndex(oldIndex);
+        }
+        return this;
+    }
+
+    public String actualIndex() {
+        Collection<String> indices = getAdmin().indexesForAlias(getIndex());
+        Pattern pattern = Pattern.compile(getIndex() + "\\..{32}");
         for (String index : indices) {
             if (pattern.matcher(index).matches()) {
                 return index;
@@ -53,15 +78,11 @@ public class AliasWrappedBucket extends DataBucket {
         return null;
     }
 
-    private String nextIndexVersion(Admin admin, String aliasWrapper) {
-        Collection<String> indices = admin.indexesForAlias(aliasWrapper);
-        long crtVersion = 0;
-        for (String index : indices) {
-            if (index.startsWith(aliasWrapper)) {
-                crtVersion = Long.parseLong(index.substring(index.lastIndexOf("_") + 1));
-                break;
-            }
-        }
-        return aliasWrapper + "_" + String.format("%012d", crtVersion + 1);
+    private String newIndexName() {
+        return getIndex() + "." + uuid();
+    }
+
+    private static String uuid() {
+        return UUID.randomUUID().toString().toLowerCase().replaceAll("-", "");
     }
 }

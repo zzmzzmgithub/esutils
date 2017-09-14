@@ -15,16 +15,16 @@
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
 ## High level concepts
-The design revolves around an `ElasticSearchClient` component which in turn can produce sub-components like `Search` or `Admin`.
-The objective is to have _some_ separation of concerns, but also a certain fluency in the API and component dependencies.
+The design revolves around an `ElasticSearchClient` component which can produce sub-components like `Search` or `Admin`.
+The objective is to have _some_ separation of concerns, but also to achieve a certain fluency in the API and component dependencies.
 
 For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
-a `DataBucket` parameter. A `DataBucket` is a "pointer" to an (index,type) tuple. Custom functionality and naming overrides 
+a `DataBucket` parameter. A [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) is a "pointer" to an (index,type) tuple. Custom functionality and naming overrides 
 can then be implemented by extending this class. One example is `AliasWrappedBucket` (more on that here https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
 
 This gives the API user more flexibility in deciding which components should be application state and which can be produced dynamically.

@@ -33,13 +33,19 @@ public class SearchTest extends TestBase {
     @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(new DataBucket(null, "aaa"));
+                .search(esClient().admin().bucket(null, "aaa"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoType() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(new DataBucket("aaa", null));
+                .search(esClient().admin().bucket("aaa", null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNoAdmin() throws Exception {
+        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+                .search(new DataBucket(null, "aaa", "aaa"));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -235,7 +241,7 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testCustomBucket() throws Exception {
-        Search search = esClient().search(new CustomBucket("private-custom-index", "mytype", "custom1"));
+        Search search = esClient().search(new CustomBucket(esClient().admin(), "private-custom-index", "mytype", "custom1"));
         String document = randomDoc();
         String id = search.indexer().indexJson(document);
         Map<String, Object> indexedDoc = getMap("custom1---private-custom-index", "mytype", id);
@@ -245,7 +251,7 @@ public class SearchTest extends TestBase {
 
     @Test(expected = SearchException.class)
     public void testFailDeserialize() throws Exception {
-        Search search = esClient().search(new DataBucket("test-fail-deserialize", "typemapped"));
+        Search search = esClient().search(esClient().admin().bucket("test-fail-deserialize", "typemapped"));
         search.indexer().indexJson("a", randomDoc());
         search.get("a", PojoSerialize.class);
     }
@@ -263,12 +269,12 @@ public class SearchTest extends TestBase {
                 .collect(Collectors.toList());
 
         String index = "test-scroll-full-index";
-        client.search(new DataBucket(index, "type1"))
+        client.search(esClient().admin().bucket(index, "type1"))
                 .indexer()
                 .bulkIndex(docs1);
         waitForIndexedDocs(index, 100);
 
-        client.search(new DataBucket(index, "type2"))
+        client.search(esClient().admin().bucket(index, "type2"))
                 .indexer()
                 .bulkIndex(docs2);
         waitForIndexedDocs(index, 200);
@@ -276,13 +282,13 @@ public class SearchTest extends TestBase {
         long count = Search.scrollIndex(esClient(), index)
                 .count();
         Assert.assertEquals(200, count);
-        Assert.assertEquals(100, client.search(new DataBucket(index, "type1")).count());
-        Assert.assertEquals(100, client.search(new DataBucket(index, "type2")).count());
+        Assert.assertEquals(100, client.search(esClient().admin().bucket(index, "type1")).count());
+        Assert.assertEquals(100, client.search(esClient().admin().bucket(index, "type2")).count());
     }
 
     @Test
     public void testCustomObjectMapper() throws Exception {
-        Search search = esClient().search(new DataBucket("test-custom-object-mapper", "typemapped"));
+        Search search = esClient().search(esClient().admin().bucket("test-custom-object-mapper", "typemapped"));
         PojoSerialize pojo = new PojoSerialize();
         Instant time = pojo.getTime();
         String id = search.indexer().indexObject(pojo);
@@ -296,7 +302,7 @@ public class SearchTest extends TestBase {
         module.addDeserializer(Instant.class, new InstantDeserializer());
         objectMapper.registerModule(module);
 
-        Search search2 = esClient().search(new DataBucket("test-custom-object-mapper2", "typemapped"));
+        Search search2 = esClient().search(esClient().admin().bucket("test-custom-object-mapper2", "typemapped"));
         esClient().setObjectMapper(objectMapper);
         String newId = search2.indexer().indexObject(pojo);
         String str = search2.getJson(newId);
@@ -321,8 +327,8 @@ public class SearchTest extends TestBase {
 
         private String prefix;
 
-        public CustomBucket(String index, String type, String prefix) {
-            super(index, type);
+        protected CustomBucket(Admin admin, String index, String type, String prefix) {
+            super(admin, index, type);
             this.prefix = prefix;
         }
 
