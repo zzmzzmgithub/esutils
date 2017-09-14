@@ -20,7 +20,7 @@
 ```
 
 ## High level concepts
-The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component which can produce sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Search.html) or [`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
+The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component which can produce sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html) or [`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
 The objective is to have _some_ separation of concerns, but also to achieve a certain fluency in the API and component dependencies.
 
 For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
