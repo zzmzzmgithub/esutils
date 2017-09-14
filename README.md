@@ -7,7 +7,8 @@
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 ##### Other considerations
-* Unit tests use an actual ElasticSearch instance, starts/stops automatically on build (embedded is not supported anymore so we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
+* Unit tests download and run an ElasticSearch instance locally as embedded is not supported anymore so
+we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
 
 ### Maven
 
@@ -20,14 +21,17 @@
 ```
 
 ## High level concepts
-The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component which can produce sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html) or [`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
-The objective is to have _some_ separation of concerns, but also to achieve a certain fluency in the API and component dependencies.
+The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component
+which produces sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html) or
+[`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
 
-For simplicity, the `Search` component and its sub-components are designed to interact with a specific index and type, passed through
-a `DataBucket` parameter. A [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) is a "pointer" to an (index,type) tuple. Custom functionality and naming overrides 
-can then be implemented by extending this class. One example is [`AliasWrappedBucket`](https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
+A `Search` instance is bound to a [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
+an (index,type) tuple.
 
-This gives the API user more flexibility in deciding which components should be application state and which can be produced dynamically.
+`DataBucket` can be extended for custom behaviours like prefixing/suffixing index names, etc. This can be used to implement dynamic names for the index at runtime,
+which can be useful for multi-tenancy, etc. Unit tests contain such customisation examples (check `DataBucket` subclasses in project).
+
+A more elaborate customisation of `DataBucket` is [`AliasWrappedBucket`](https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
 
 ## Creating a client instance
 You can pass either an instance of `org.elasticsearch.client.Client` or, alternatively, a list of hostname:port tuples and a cluster name. 
@@ -40,10 +44,10 @@ ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost
 ## Create a `Search` instance
 ```
 ElasticSearchClient esClient = ...
-DataBucket dataBucket = new DataBucket("index1", "type1")
+DataBucket dataBucket = esClient.admin().bucket("index1", "type1")
 
 // The recommended approach to create an index when using DataBuckets 
-esClient.admin().createIndex(dataBucket);
+dataBucket.createIndex();
 
 Search search = esClient.search(dataBucket); 
 ```
@@ -53,9 +57,11 @@ https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.
 #### Index documents
 ```
 SomePojo document = ...
-search.indexer().index(document);
-search.indexer().index(id, document);
-search.indexer().index(id, document, true);
+Indexer indexer = search.indexer();
+indexer.indexObject(document);
+indexer.indexObject(id, document);
+indexer.indexObject(id, document, true);
+indexer.indexJson(jsonDocAsString);
 ```
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
 The `index()` methods always return the `_id` of the newly indexed document.
@@ -70,8 +76,9 @@ search.indexer().bulkIndex(documents);
 ```
 
 #### Batch indexing
-This is a useful mechanism to index a `Stream` or any other potentially unbounded data set.
-`IndexBatch` implements `AutoCloseable` which means it requires no cleanup (i.e. bulk-indexing the last items that might not be a complete batch) 
+`IndexBatch` is useful when indexing a `Stream` or any other data set with unknown size. The component retains a temporary buffer and triggers an `indexer.bulkIndex()`
+automatically whenever the number of items in the buffer reaches a given size (the batch size). It also implements `AutoCloseable` to deal with the last items that
+might not form a complete batch for an automatic index.  
 ```
 Stream<Map<String,Object>> docs = ...
 try (IndexBatch batch = indexer.batch(100)) {
