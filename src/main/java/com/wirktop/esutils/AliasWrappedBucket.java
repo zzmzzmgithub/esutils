@@ -37,6 +37,10 @@ public class AliasWrappedBucket extends DataBucket {
         getAdmin().removeIndex(crtIndex);
     }
 
+    public void refresh() {
+        refresh(0);
+    }
+
     public void refresh(int shards) {
         String alias = getIndex();
         String crtIndex = actualIndex();

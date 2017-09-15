@@ -59,7 +59,7 @@ public class AliasWrappedBucketTest extends TestBase {
         Search search = client.search(bucket);
         indexStructuredDocs(267, search);
         waitForIndexedDocs(indexBaseName, 267);
-        bucket.refresh(5);
+        bucket.refresh();
         Thread.sleep(1000);
         Assert.assertEquals(267, search.count());
     }
