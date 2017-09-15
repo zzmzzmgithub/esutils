@@ -42,17 +42,6 @@ ElasticSearchClient esClient1 = new ElasticSearchClient(client);
 ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost:9300"), "cluster-x");
 ```
 
-## Create a `Search` instance
-```
-ElasticSearchClient esClient = ...
-DataBucket dataBucket = esClient.admin().bucket("index1", "type1")
-
-// The recommended approach to create an index when using DataBuckets 
-dataBucket.createIndex();
-
-Search search = esClient.search(dataBucket); 
-```
-
 ## Indexing
 https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html
 #### Index documents
