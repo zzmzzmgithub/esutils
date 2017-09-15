@@ -7,7 +7,7 @@
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 ##### Other considerations
-* Unit tests download and run an ElasticSearch instance locally as embedded is not supported anymore so
+* Unit tests download and run an ElasticSearch instance locally (embedded is not supported anymore so
 we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
 
 ### Maven
