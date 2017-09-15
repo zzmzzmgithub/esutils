@@ -29,8 +29,8 @@ which produces sub-components like [`Search`](https://wirktop.github.io/esutils/
 `Search` and `Indexer` instances are bound to a [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
 an (index,type) tuple.
 
-`DataBucket` can be extended for custom behaviours like prefixing/suffixing index names, etc. This can be used to implement dynamic names for the index at runtime,
-which can be useful for multi-tenancy, etc. Unit tests contain such customisation examples (check `DataBucket` subclasses in project).
+`DataBucket` can be extended for custom behaviours like prefixing/suffixing index or type names, etc. It is the easiest way to achieve dynamic names for the
+index (or type) at runtime, and can be useful for multi-tenancy, etc. Unit tests contain such customisation examples (check `DataBucket` subclasses in the project).
 
 A more elaborate customisation of `DataBucket` is [`AliasWrappedBucket`](https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
 
