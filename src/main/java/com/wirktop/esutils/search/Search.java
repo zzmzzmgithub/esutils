@@ -2,7 +2,6 @@ package com.wirktop.esutils.search;
 
 import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.ElasticSearchClient;
-import com.wirktop.esutils.index.Indexer;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -24,7 +23,6 @@ public class Search {
 
     private ElasticSearchClient esClient;
     private DataBucket bucket;
-    private Indexer indexer;
 
     public Search(ElasticSearchClient esClient, DataBucket bucket) {
         if (esClient == null) {
@@ -35,7 +33,6 @@ public class Search {
         }
         this.esClient = esClient;
         this.bucket = bucket;
-        this.indexer = new Indexer(this);
     }
 
     public Map<String, Object> getMap(String id) {
@@ -87,10 +84,6 @@ public class Search {
         }
         SearchResponse response = builder.execute().actionGet();
         return response.getHits().getTotalHits();
-    }
-
-    public Indexer indexer() {
-        return indexer;
     }
 
     public SearchRequestBuilder searchRequest() {

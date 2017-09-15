@@ -2,6 +2,7 @@ package com.wirktop.esutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirktop.esutils.index.IndexBatch;
+import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchResponse;
@@ -118,12 +119,20 @@ public abstract class TestBase {
         return esClient().search(esClient().admin().bucket(index, type));
     }
 
+    public Indexer indexer(String index, String type) {
+        return esClient().indexer(esClient().admin().bucket(index, type));
+    }
+
     public ElasticSearchClient esClient() {
         return esClient;
     }
 
     public Search searchTcp(String index, String type) {
         return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(esClient().admin().bucket(index, type));
+    }
+
+    public Indexer indexerTcp(String index, String type) {
+        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).indexer(esClient().admin().bucket(index, type));
     }
 
     public List<String> generateDocuments(int count, boolean addError) throws IOException {
@@ -170,9 +179,9 @@ public abstract class TestBase {
         return ClientBuilder.newClient(config);
     }
 
-    public void indexStructuredDocs(int docCount, Search search) throws Exception {
+    public void indexStructuredDocs(int docCount, Indexer indexer) throws Exception {
         Random random = new Random();
-        try (IndexBatch batch = search.indexer().batch()) {
+        try (IndexBatch batch = indexer.batch()) {
             JSONObject jsonObject = docAsJson("doc-template-mapped.json");
             for (int i = 0; i < docCount; i++) {
                 JSONObject json = new JSONObject(jsonObject.toString());

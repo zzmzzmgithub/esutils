@@ -1,5 +1,6 @@
 package com.wirktop.esutils;
 
+import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Search;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -29,8 +30,9 @@ public class AliasWrappedBucketTest extends TestBase {
         Assert.assertEquals(indexesForAlias.iterator().next(), index1);
 
         Search search = client.search(bucket);
+        Indexer indexer = client.indexer(bucket);
         String document = randomDoc();
-        String newId = search.indexer().indexJson(document.toString());
+        String newId = indexer.indexJson(document.toString());
         Map<String, Object> storedDoc = search.getMap(newId);
         assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(indexBaseName));
@@ -57,7 +59,8 @@ public class AliasWrappedBucketTest extends TestBase {
         bucket.createIndex();
 
         Search search = client.search(bucket);
-        indexStructuredDocs(267, search);
+        Indexer indexer = client.indexer(bucket);
+        indexStructuredDocs(267, indexer);
         waitForIndexedDocs(indexBaseName, 267);
         bucket.refresh();
         Thread.sleep(1000);
@@ -82,8 +85,9 @@ public class AliasWrappedBucketTest extends TestBase {
         Assert.assertEquals(indexesForAlias.iterator().next(), index1);
 
         Search search = client.search(bucket);
+        Indexer indexer = client.indexer(bucket);
         String document = randomDoc();
-        String newId = search.indexer().indexJson(document);
+        String newId = indexer.indexJson(document);
         Map<String, Object> storedDoc = search.getMap(newId);
         assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
@@ -108,14 +112,16 @@ public class AliasWrappedBucketTest extends TestBase {
         String index = bucket.actualIndex();
         String document = super.randomDoc();
         Search search = esClient().search(bucket);
-        search.indexer().indexJson(document);
+        Indexer indexer = esClient().indexer(bucket);
+        indexer.indexJson(document);
         waitForIndexedDocs(index, 1);
         Assert.assertEquals(1, search.count());
 
         DataBucket newBucket = bucket.createNewIndex();
-        esClient().search(newBucket).indexer().indexJson(randomDoc());
-        esClient().search(newBucket).indexer().indexJson(randomDoc());
-        esClient().search(newBucket).indexer().indexJson(randomDoc());
+        Indexer newIndexer = esClient().indexer(newBucket);
+        newIndexer.indexJson(randomDoc());
+        newIndexer.indexJson(randomDoc());
+        newIndexer.indexJson(randomDoc());
         waitForIndexedDocs(newBucket.getIndex(), 3);
         AliasWrappedBucket newWrappedBucket = bucket.wrap(newBucket, true);
         Assert.assertFalse(esClient().admin().indexExists(index));

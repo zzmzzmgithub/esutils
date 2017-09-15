@@ -16,16 +16,17 @@ we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-s
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
 </dependency>
 ```
 
 ## High level concepts
 The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component
-which produces sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html) or
+which produces sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html),
+[`Indexer`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html) or
 [`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
 
-A `Search` instance is bound to a [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
+`Search` and `Indexer` instances are bound to a [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
 an (index,type) tuple.
 
 `DataBucket` can be extended for custom behaviours like prefixing/suffixing index names, etc. This can be used to implement dynamic names for the index at runtime,
@@ -57,7 +58,7 @@ https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.
 #### Index documents
 ```
 SomePojo document = ...
-Indexer indexer = search.indexer();
+Indexer indexer = esClient.indexer(bucket);
 indexer.indexObject(document);
 indexer.indexObject(id, document);
 indexer.indexObject(id, document, true);
@@ -72,7 +73,7 @@ for both an ID and the content of the document. For bulk indexing this is partic
 #### Bulk index documents
 ```
 Collection<Document> documents = ...
-search.indexer().bulkIndex(documents);
+esClient.indexer(bucket).bulkIndex(documents);
 ```
 
 #### Batch indexing

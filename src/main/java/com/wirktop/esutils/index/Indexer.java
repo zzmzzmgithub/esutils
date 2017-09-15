@@ -1,10 +1,6 @@
 package com.wirktop.esutils.index;
 
-import com.wirktop.esutils.DataBucket;
-import com.wirktop.esutils.Document;
-import com.wirktop.esutils.Json;
-import com.wirktop.esutils.SearchException;
-import com.wirktop.esutils.search.Search;
+import com.wirktop.esutils.*;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -20,10 +16,13 @@ import java.util.Collection;
 public class Indexer {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
-    private Search search;
 
-    public Indexer(Search search) {
-        this.search = search;
+    private ElasticSearchClient esClient;
+    private DataBucket bucket;
+
+    public Indexer(ElasticSearchClient esClient, DataBucket bucket) {
+        this.esClient = esClient;
+        this.bucket = bucket;
     }
 
     public String indexObject(Object doc) {
@@ -63,7 +62,7 @@ public class Indexer {
 
     public void bulkIndex(Collection<Document> documents) {
         if (documents != null) {
-            BulkRequestBuilder request = search.esClient().getClient().prepareBulk();
+            BulkRequestBuilder request = esClient.getClient().prepareBulk();
             for (Document document : documents) {
                 IndexRequestBuilder indexRequest = prepareIndex();
                 if (document.getId() != null) {
@@ -89,7 +88,7 @@ public class Indexer {
 
     public void bulkIndexJsonStr(Collection<String> documents) {
         if (documents != null) {
-            BulkRequestBuilder request = search.esClient().getClient().prepareBulk();
+            BulkRequestBuilder request = esClient.getClient().prepareBulk();
             for (String document : documents) {
                 IndexRequestBuilder indexRequest = prepareIndex();
                 indexRequest = indexRequest.setSource(document, XContentType.JSON);
@@ -115,14 +114,14 @@ public class Indexer {
     }
 
     private IndexRequestBuilder prepareIndex() {
-        return search.esClient().getClient().prepareIndex(search.bucket().getIndex(), search.bucket().getType());
+        return esClient.getClient().prepareIndex(bucket.getIndex(), bucket.getType());
     }
 
     private Json json() {
-        return search.esClient().json();
+        return esClient.json();
     }
 
     public DataBucket bucket() {
-        return search.bucket();
+        return bucket;
     }
 }

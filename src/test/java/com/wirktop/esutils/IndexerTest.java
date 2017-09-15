@@ -23,7 +23,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testIndexDocument() throws Exception {
         Search search = search("indextestindexdocument", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("indextestindexdocument", "type1");
         String doc = randomDoc();
         indexer.indexDocument(new Document("123", doc));
         Assert.assertEquals(search.getJson("123"), doc);
@@ -32,7 +32,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testIndexDocumentWithRefresh() throws Exception {
         Search search = search("indextestindexdocumentrefresh", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("indextestindexdocumentrefresh", "type1");
         String doc = randomDoc();
         indexer.indexDocument(new Document("345345", doc), true);
         Assert.assertEquals(search.getJson("345345"), doc);
@@ -41,7 +41,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testIndexPojo() throws Exception {
         Search search = search("index1", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("index1", "type1");
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
         String newId = indexer.indexObject(document);
         System.out.println("Got ID: " + newId);
@@ -51,14 +51,14 @@ public class IndexerTest extends TestBase {
     @Test(expected = SearchException.class)
     public void testIndexPojoFail() throws Exception {
         Search search = search("index1", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("index1", "type1");
         indexer.indexObject("asdasdsa", new TestPojoBroken(), false);
     }
 
     @Test
     public void testIndexPojoId() throws Exception {
         Search search = search("index1", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("index1", "type1");
         String myId = UUID.randomUUID().toString();
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
         String newId = indexer.indexObject(myId, document);
@@ -70,7 +70,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testIndexPojoIdRefresh() throws Exception {
         Search search = search("index1", "type1");
-        Indexer indexer = search.indexer();
+        Indexer indexer = indexer("index1", "type1");
         String myId = UUID.randomUUID().toString();
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
         String newId = indexer.indexObject(myId, document, true);
@@ -81,7 +81,7 @@ public class IndexerTest extends TestBase {
 
     @Test
     public void testIndexSimpleMap() throws Exception {
-        Indexer indexer = search("index1", "type1").indexer();
+        Indexer indexer = indexer("index1", "type1");
         Map<String, Object> document = docAsMap("sample-doc-1.json");
         String newId = indexer.indexObject(document);
         System.out.println("Got ID: " + newId);
@@ -90,7 +90,7 @@ public class IndexerTest extends TestBase {
 
     @Test
     public void testIndexSimpleJson() throws Exception {
-        Indexer indexer = search("index1", "type1").indexer();
+        Indexer indexer = indexer("index1", "type1");
         JSONObject document = docAsJson("sample-doc-1.json");
         String newId = indexer.indexJson(document.toString());
         System.out.println("Got ID: " + newId);
@@ -99,7 +99,7 @@ public class IndexerTest extends TestBase {
 
     @Test
     public void testIndexSimpleString() throws Exception {
-        Indexer indexer = search("index1", "type1").indexer();
+        Indexer indexer = indexer("index1", "type1");
         JSONObject document = docAsJson("sample-doc-1.json");
         String newId = indexer.indexJson(document.toString());
         System.out.println("Got ID: " + newId);
@@ -108,7 +108,7 @@ public class IndexerTest extends TestBase {
 
     @Test
     public void testIndexWithRefresh() throws Exception {
-        Indexer indexer = search("index1", "type1").indexer();
+        Indexer indexer = indexer("index1", "type1");
         JSONObject document = docAsJson("sample-doc-1.json");
         String newId = indexer.indexJson(null, document.toString());
         System.out.println("Got ID: " + newId);
@@ -117,25 +117,25 @@ public class IndexerTest extends TestBase {
 
     @Test
     public void testIndexStringNoId() throws Exception {
-        indexAndTestString(search("index1", "type1").indexer(), null, "sample-doc-1.json");
+        indexAndTestString(indexer("index1", "type1"), null, "sample-doc-1.json");
     }
 
     @Test(expected = MapperParsingException.class)
     public void testIndexStringWithUnderscoreIdInDoc() throws Exception {
-        indexAndTestString(search("index1", "type1").indexer(), null, "sample-doc-2.json");
+        indexAndTestString(indexer("index1", "type1"), null, "sample-doc-2.json");
     }
 
     @Test
     public void testIndexStringWithExplicitId() throws Exception {
         String id = UUID.randomUUID().toString();
-        String newId = indexAndTestString(search("index1", "type1").indexer(), id, "sample-doc-1.json");
+        String newId = indexAndTestString(indexer("index1", "type1"), id, "sample-doc-1.json");
         Assert.assertEquals(id, newId);
     }
 
     @Test
     public void testBulkString() throws Exception {
         String index = "index-bulk-string";
-        Indexer indexer = search(index, "type1").indexer();
+        Indexer indexer = indexer(index, "type1");
         List<String> documents = generateDocuments(25, false);
         indexer.bulkIndexJsonStr(documents);
 
@@ -157,7 +157,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testBatchIndex() throws Exception {
         String index = "batchindex";
-        Indexer indexer = searchTcp(index, "typex").indexer();
+        Indexer indexer = indexerTcp(index, "typex");
         try (IndexBatch batch = indexer.batch()) {
             for (int i = 0; i < 50; i++) {
                 batch.add(UUID.randomUUID().toString(), randomDoc());
@@ -171,7 +171,7 @@ public class IndexerTest extends TestBase {
     @Test
     public void testBatchIndexWithSize() throws Exception {
         String index = "batchindex2";
-        Indexer indexer = searchTcp(index, "typex").indexer();
+        Indexer indexer = indexerTcp(index, "typex");
         try (IndexBatch batch = indexer.batch(13)) {
             for (int i = 0; i < 50; i++) {
                 batch.add(UUID.randomUUID().toString(), randomDoc());

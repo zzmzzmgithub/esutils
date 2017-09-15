@@ -1,5 +1,6 @@
 package com.wirktop.esutils;
 
+import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Search;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequest;
@@ -138,8 +139,10 @@ public class AdminTest extends TestBase {
         esClient().admin().createTemplate("index", getClass().getResourceAsStream("/templates/template-index.json"));
         String index = "testcreatealiaswithfilter";
         admin.createIndex(index);
-        Search search = client.search(esClient().admin().bucket(index, "type"));
-        indexStructuredDocs(100, search);
+        DataBucket bucket = esClient().admin().bucket(index, "type");
+        Search search = client.search(bucket);
+        Indexer indexer = client.indexer(bucket);
+        indexStructuredDocs(100, indexer);
         waitForIndexedDocs(index, 100);
         admin.createAlias("males-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "male"), index);
         admin.createAlias("females-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "female"), index);
@@ -186,15 +189,17 @@ public class AdminTest extends TestBase {
 
         String index = "index-test-copy";
 
-        Search search = client.search(esClient().admin().bucket(index, "type1"));
-        search.indexer().bulkIndex(docs1);
+        DataBucket bucket = esClient().admin().bucket(index, "type1");
+        Search search = client.search(bucket);
+        Indexer indexer = client.indexer(bucket);
+        indexer.bulkIndex(docs1);
         waitForIndexedDocs(index, count);
         Assert.assertEquals(count, search.count());
 
         String cloneIndex = "index-test-copy-clone";
         admin.copyData(search.bucket().getIndex(), cloneIndex);
         waitForIndexedDocs(cloneIndex, count);
-        Assert.assertEquals(count, client.search(esClient().admin().bucket(index, "type1")).count());
+        Assert.assertEquals(count, client.search(bucket).count());
         Assert.assertEquals(0, client.search(esClient().admin().bucket(index, "typex")).count());
         Assert.assertEquals(0, client.search(esClient().admin().bucket(index, "21370123123")).count());
     }

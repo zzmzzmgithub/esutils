@@ -1,6 +1,7 @@
 package com.wirktop.esutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -69,6 +70,10 @@ public class ElasticSearchClient {
 
     public Search search(DataBucket bucket) {
         return new Search(this, bucket);
+    }
+
+    public Indexer indexer(DataBucket bucket) {
+        return new Indexer(this, bucket);
     }
 
     public Admin admin() {

@@ -37,53 +37,57 @@ public class AliasWrappedBucket extends DataBucket {
 <span class="fc" id="L37">        getAdmin().removeIndex(crtIndex);</span>
 <span class="fc" id="L38">    }</span>
 
+    public void refresh() {
+<span class="fc" id="L41">        refresh(0);</span>
+<span class="fc" id="L42">    }</span>
+
     public void refresh(int shards) {
-<span class="fc" id="L41">        String alias = getIndex();</span>
-<span class="fc" id="L42">        String crtIndex = actualIndex();</span>
-<span class="fc" id="L43">        String nextIndex = newIndexName();</span>
-<span class="fc" id="L44">        getAdmin().createIndex(nextIndex, shards);</span>
-<span class="fc" id="L45">        getAdmin().copyData(crtIndex, nextIndex);</span>
-<span class="fc" id="L46">        getAdmin().moveAlias(alias, crtIndex, nextIndex);</span>
-<span class="fc" id="L47">        getAdmin().removeIndex(crtIndex);</span>
-<span class="fc" id="L48">    }</span>
+<span class="fc" id="L45">        String alias = getIndex();</span>
+<span class="fc" id="L46">        String crtIndex = actualIndex();</span>
+<span class="fc" id="L47">        String nextIndex = newIndexName();</span>
+<span class="fc" id="L48">        getAdmin().createIndex(nextIndex, shards);</span>
+<span class="fc" id="L49">        getAdmin().copyData(crtIndex, nextIndex);</span>
+<span class="fc" id="L50">        getAdmin().moveAlias(alias, crtIndex, nextIndex);</span>
+<span class="fc" id="L51">        getAdmin().removeIndex(crtIndex);</span>
+<span class="fc" id="L52">    }</span>
 
     public DataBucket createNewIndex() {
-<span class="fc" id="L51">        return createNewIndex(0);</span>
+<span class="fc" id="L55">        return createNewIndex(0);</span>
     }
 
     public DataBucket createNewIndex(int shards) {
-<span class="fc" id="L55">        String index = newIndexName();</span>
-<span class="fc" id="L56">        DataBucket dataBucket = new DataBucket(getAdmin(), index, getType());</span>
-<span class="fc" id="L57">        getAdmin().createIndex(index, shards);</span>
-<span class="fc" id="L58">        return dataBucket;</span>
+<span class="fc" id="L59">        String index = newIndexName();</span>
+<span class="fc" id="L60">        DataBucket dataBucket = new DataBucket(getAdmin(), index, getType());</span>
+<span class="fc" id="L61">        getAdmin().createIndex(index, shards);</span>
+<span class="fc" id="L62">        return dataBucket;</span>
     }
 
     public AliasWrappedBucket wrap(DataBucket dataBucket, boolean deleteCurrentIndex) {
-<span class="fc" id="L62">        String oldIndex = actualIndex();</span>
-<span class="fc" id="L63">        getAdmin().moveAlias(getIndex(), oldIndex, dataBucket.getIndex());</span>
-<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        if (deleteCurrentIndex) {</span>
-<span class="fc" id="L65">            getAdmin().removeIndex(oldIndex);</span>
+<span class="fc" id="L66">        String oldIndex = actualIndex();</span>
+<span class="fc" id="L67">        getAdmin().moveAlias(getIndex(), oldIndex, dataBucket.getIndex());</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (deleteCurrentIndex) {</span>
+<span class="fc" id="L69">            getAdmin().removeIndex(oldIndex);</span>
         }
-<span class="fc" id="L67">        return this;</span>
+<span class="fc" id="L71">        return this;</span>
     }
 
     public String actualIndex() {
-<span class="fc" id="L71">        Collection&lt;String&gt; indices = getAdmin().indexesForAlias(getIndex());</span>
-<span class="fc" id="L72">        Pattern pattern = Pattern.compile(getIndex() + &quot;\\..{32}&quot;);</span>
-<span class="fc bfc" id="L73" title="All 2 branches covered.">        for (String index : indices) {</span>
-<span class="pc bpc" id="L74" title="1 of 2 branches missed.">            if (pattern.matcher(index).matches()) {</span>
-<span class="fc" id="L75">                return index;</span>
+<span class="fc" id="L75">        Collection&lt;String&gt; indices = getAdmin().indexesForAlias(getIndex());</span>
+<span class="fc" id="L76">        Pattern pattern = Pattern.compile(getIndex() + &quot;\\..{32}&quot;);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        for (String index : indices) {</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">            if (pattern.matcher(index).matches()) {</span>
+<span class="fc" id="L79">                return index;</span>
             }
-<span class="nc" id="L77">        }</span>
-<span class="fc" id="L78">        return null;</span>
+<span class="nc" id="L81">        }</span>
+<span class="fc" id="L82">        return null;</span>
     }
 
     private String newIndexName() {
-<span class="fc" id="L82">        return getIndex() + &quot;.&quot; + uuid();</span>
+<span class="fc" id="L86">        return getIndex() + &quot;.&quot; + uuid();</span>
     }
 
     private static String uuid() {
-<span class="fc" id="L86">        return UUID.randomUUID().toString().toLowerCase().replaceAll(&quot;-&quot;, &quot;&quot;);</span>
+<span class="fc" id="L90">        return UUID.randomUUID().toString().toLowerCase().replaceAll(&quot;-&quot;, &quot;&quot;);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
