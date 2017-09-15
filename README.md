@@ -38,7 +38,7 @@ A more elaborate customisation of `DataBucket` is [`AliasWrappedBucket`](https:/
 You can pass either an instance of `org.elasticsearch.client.Client` or, alternatively, a list of hostname:port tuples and a cluster name. 
 ```
 org.elasticsearch.client.Client client = ...
-ElasticSearchClient esClient1 = new ElasticSearchClient(client);
+ElasticSearchClient esClient = new ElasticSearchClient(client);
 ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost:9300"), "cluster-x");
 ```
 
