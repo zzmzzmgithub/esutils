@@ -6,7 +6,8 @@
 * Code coverage: https://wirktop.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 
-##### Other considerations
+##### Highlights
+* Stream results
 * Unit tests download and run an ElasticSearch instance locally (embedded is not supported anymore so
 we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
 
@@ -78,6 +79,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 
 ## Searching
 https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html
+A series of search and scroll methods return a `Stream` that can be used to transparently process the complete result set, without having to worry about paging.
 ```
 // Search (ES _search)
 search.seach(QueryBuilders.matchAllQuery(), 10)
