@@ -5,13 +5,26 @@
 * Javadocs: https://wirktop.github.io/esutils/etc/apidocs/index.html 
 * Code coverage: https://wirktop.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
-
-##### Highlights
-* Stream results
 * Unit tests download and run an ElasticSearch instance locally (embedded is not supported anymore so
 we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
 
-### Maven
+## Highlights
+
+* Stream search results
+```
+Stream<Person> people = search.search(..., Person.class)
+```
+
+* Batch Indexing
+```
+try (IndexBatch batch = indexer.batch(100)) {
+    ...
+    batch.add(doc);
+}
+
+```
+* Alias-wrapped bucket: https://github.com/wirktop/esutils/wiki/AliasWrappedBucket
+## Maven
 
 ```
 <dependency>
