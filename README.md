@@ -92,6 +92,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 
 ## Searching
 https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html
+
 A series of search and scroll methods return a `Stream` that can be used to transparently process the complete result set, without having to worry about paging.
 ```
 // Search (ES _search)
@@ -109,7 +110,7 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
-https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/admin/Admin.html
+https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
 Admin admin = client.admin();
