@@ -220,10 +220,7 @@
                         <phase>clean</phase>
                         <configuration>
                             <target>
-                                <exec executable="etc/run-es.sh" spawn="true">
-                                    <arg value="5.5.2"/>
-                                    <arg value="wirktop-esutils-test"/>
-                                </exec>
+                                <exec executable="etc/run-es.sh" spawn="true"/>
                                 <exec executable="etc/wait-es.sh"/>
                             </target>
                         </configuration>
