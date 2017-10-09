@@ -12,13 +12,13 @@ we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-s
 
 * Stream search results
 ```
-Stream<Person> people = search.search(..., Person.class)
+Stream<Person> people = search.search(...)
+                              .map(search.hitToPojo(Person.class));
 ```
 
 * Batch Indexing
 ```
-try (IndexBatch batch = indexer.batch(100)) {
-    ...
+try (IndexBatch batch = indexer.batch()) {
     batch.add(doc);
 }
 
