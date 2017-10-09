@@ -18,7 +18,7 @@ public class AliasWrappedBucket extends DataBucket {
     }
 
     @Override
-    public  void createIndex(Admin admin, int shards) {
+    public void createIndex(Admin admin, int shards) {
         String alias = getIndex();
         String crtIndex = actualIndex(admin);
         if (crtIndex == null || !admin.indexExists(crtIndex)) {
@@ -28,7 +28,7 @@ public class AliasWrappedBucket extends DataBucket {
         }
     }
 
-    public  void wipe(Admin admin) {
+    public void wipe(Admin admin) {
         wipe(admin, 0);
     }
 

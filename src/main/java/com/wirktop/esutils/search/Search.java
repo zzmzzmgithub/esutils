@@ -26,9 +26,11 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
-    protected static final Function<SearchHit, Document> HIT_TO_DOCUMENT = (hit) -> new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());
-    private ElasticSearchClient esClient;
-    private DataBucket bucket;
+    public static final Function<SearchHit, Document> HIT_TO_DOC = hit -> new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());
+
+    private final ElasticSearchClient esClient;
+    private final DataBucket bucket;
+    private final Scroll scroll;
 
     public Search(ElasticSearchClient esClient, DataBucket bucket) {
         if (esClient == null) {
@@ -39,6 +41,7 @@ public class Search {
         }
         this.esClient = esClient;
         this.bucket = bucket;
+        scroll = new Scroll(esClient, bucket);
     }
 
     public Map<String, Object> getMap(String id) {
@@ -106,33 +109,12 @@ public class Search {
                 .setVersion(true);
     }
 
-    public <T> Stream<T> search(Class<T> pojoClass) {
-        return search(null, pojoClass, SearchIterator.DEFAULT_PAGE_SIZE);
-    }
-
-    public <T> Stream<T> search(Class<T> pojoClass, int pageSize) {
-        return search(null, pojoClass, pageSize);
-    }
-
-    public <T> Stream<T> search(QueryBuilder query, Class<T> pojoClass) {
-        return search(query, pojoClass, SearchIterator.DEFAULT_PAGE_SIZE);
-    }
-
-    public <T> Stream<T> search(QueryBuilder query, Class<T> pojoClass, int pageSize) {
-        return search(query, pageSize)
-                .map((hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass));
-    }
-
-    public Stream<Document> searchDocs(QueryBuilder query) {
-        return searchDocs(query, SearchIterator.DEFAULT_PAGE_SIZE);
-    }
-
-    public Stream<Document> searchDocs(QueryBuilder query, int pageSize) {
-        return search(query, pageSize).map(HIT_TO_DOCUMENT);
-    }
-
     public Stream<SearchHit> search(QueryBuilder query) {
         return search(query, SearchIterator.DEFAULT_PAGE_SIZE);
+    }
+
+    public <T> Function<SearchHit, T> hitToPojo(Class<T> pojoClass) {
+        return (hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass);
     }
 
     public Stream<SearchHit> search(QueryBuilder query, int pageSize) {
@@ -174,7 +156,7 @@ public class Search {
     }
 
     public Scroll scroll() {
-        return new Scroll(esClient, bucket);
+        return scroll;
     }
 
     public Indexer indexer() {

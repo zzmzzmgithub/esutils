@@ -97,7 +97,8 @@ public class SearchTest extends TestBase {
         int docCount = 243;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
-        List<Person> docs = search.search(QueryBuilders.matchAllQuery(), Person.class)
+        List<Person> docs = search.search(QueryBuilders.matchAllQuery())
+                .map(search.hitToPojo(Person.class))
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }
@@ -110,7 +111,8 @@ public class SearchTest extends TestBase {
         int docCount = 243;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
-        List<Document> docs = search.searchDocs(QueryBuilders.matchAllQuery())
+        List<Document> docs = search.search(QueryBuilders.matchAllQuery())
+                .map(Search.HIT_TO_DOC)
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
         for (Document doc : docs) {
@@ -133,7 +135,6 @@ public class SearchTest extends TestBase {
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }
-
 
     @Test
     public void testSearchHitsDefaultPageSize() throws Exception {
@@ -209,7 +210,8 @@ public class SearchTest extends TestBase {
         waitForIndexedDocs(index, 100);
 
         ArrayList<Person> people = new ArrayList<>();
-        search.search(Person.class)
+        search.search(QueryBuilders.matchAllQuery())
+                .map(search.hitToPojo(Person.class))
                 .forEach((people::add));
 
         Assert.assertEquals(100, people.size());

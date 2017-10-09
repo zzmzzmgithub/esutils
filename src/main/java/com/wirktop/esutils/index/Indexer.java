@@ -23,12 +23,20 @@ public class Indexer {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
 
-    private ElasticSearchClient esClient;
-    private DataBucket bucket;
+    private final ElasticSearchClient esClient;
+    private final DataBucket bucket;
 
     public Indexer(ElasticSearchClient esClient, DataBucket bucket) {
         this.esClient = esClient;
         this.bucket = bucket;
+    }
+
+    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
+        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
+        if (refresh) {
+            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        }
+        request.execute().actionGet();
     }
 
     public String indexObject(Object doc) {
@@ -55,29 +63,38 @@ public class Indexer {
         return indexDocument(new Document(id, jsonDocument), refresh);
     }
 
-    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount) {
-        updateScript(id, painlessScript, params, retryCount, false);
+    public void updateScript(String id, String painlessScript, Map<String, Object> params) {
+        updateScript(id, painlessScript, params, 0, 0);
     }
 
-    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount, boolean waitRefresh) {
+    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount, long version) {
         UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
                 .retryOnConflict(retryCount)
                 .script(new Script(ScriptType.INLINE, "painless", painlessScript, params));
-        if (waitRefresh) {
-            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        if (version > 0) {
+            request = request.version(version);
+        }
+        esClient.getClient().update(request).actionGet();
+    }
+
+    public void updateJson(String id, String jsonStr, long version) {
+        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
+                .doc(jsonStr, XContentType.JSON);
+        if (version > 0) {
+            request = request.version(version);
         }
         esClient.getClient().update(request).actionGet();
     }
 
     public void updateField(String id, String field, Object value) {
-        updateField(id, field, value, false);
+        updateField(id, field, value, 0);
     }
 
-    public void updateField(String id, String field, Object value, boolean waitRefresh) {
+    public void updateField(String id, String field, Object value, long version) {
         UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
                 .doc(Collections.singletonMap(field, value));
-        if (waitRefresh) {
-            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        if (version > 0) {
+            request = request.version(version);
         }
         esClient.getClient().update(request).actionGet();
     }
@@ -88,14 +105,6 @@ public class Indexer {
 
     public void delete(String id, boolean refresh) {
         delete(esClient, bucket, id, refresh);
-    }
-
-    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
-        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
-        if (refresh) {
-            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
-        }
-        request.execute().actionGet();
     }
 
     public String indexDocument(Document document) {
@@ -130,7 +139,7 @@ public class Indexer {
             request = request.setId(id);
         }
         if (waitRefresh) {
-            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
         }
         return request;
     }

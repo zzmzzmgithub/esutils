@@ -23,155 +23,164 @@ public class Indexer {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
 
-    private ElasticSearchClient esClient;
-    private DataBucket bucket;
+    private final ElasticSearchClient esClient;
+    private final DataBucket bucket;
 
 <span class="fc" id="L29">    public Indexer(ElasticSearchClient esClient, DataBucket bucket) {</span>
 <span class="fc" id="L30">        this.esClient = esClient;</span>
 <span class="fc" id="L31">        this.bucket = bucket;</span>
 <span class="fc" id="L32">    }</span>
 
+    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
+<span class="fc" id="L35">        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        if (refresh) {</span>
+<span class="nc" id="L37">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+        }
+<span class="fc" id="L39">        request.execute().actionGet();</span>
+<span class="fc" id="L40">    }</span>
+
     public String indexObject(Object doc) {
-<span class="fc" id="L35">        return indexObject(null, doc, false);</span>
+<span class="fc" id="L43">        return indexObject(null, doc, false);</span>
     }
 
     public String indexObject(String id, Object doc) {
-<span class="fc" id="L39">        return indexObject(id, doc, false);</span>
+<span class="fc" id="L47">        return indexObject(id, doc, false);</span>
     }
 
     public String indexObject(String id, Object doc, boolean refresh) {
-<span class="fc" id="L43">        return indexJson(id, json().toString(doc), refresh);</span>
+<span class="fc" id="L51">        return indexJson(id, json().toString(doc), refresh);</span>
     }
 
     public String indexJson(String jsonDocument) {
-<span class="fc" id="L47">        return indexJson(null, jsonDocument, false);</span>
+<span class="fc" id="L55">        return indexJson(null, jsonDocument, false);</span>
     }
 
     public String indexJson(String id, String jsonDocument) {
-<span class="fc" id="L51">        return indexJson(id, jsonDocument, false);</span>
+<span class="fc" id="L59">        return indexJson(id, jsonDocument, false);</span>
     }
 
     public String indexJson(String id, String jsonDocument, boolean refresh) {
-<span class="fc" id="L55">        return indexDocument(new Document(id, jsonDocument), refresh);</span>
+<span class="fc" id="L63">        return indexDocument(new Document(id, jsonDocument), refresh);</span>
     }
 
-    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params, int retryCount) {
-<span class="fc" id="L59">        updateScript(id, painlessScript, params, retryCount, false);</span>
-<span class="fc" id="L60">    }</span>
+    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params) {
+<span class="fc" id="L67">        updateScript(id, painlessScript, params, 0, 0);</span>
+<span class="fc" id="L68">    }</span>
 
-    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params, int retryCount, boolean waitRefresh) {
-<span class="fc" id="L63">        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)</span>
-<span class="fc" id="L64">                .retryOnConflict(retryCount)</span>
-<span class="fc" id="L65">                .script(new Script(ScriptType.INLINE, &quot;painless&quot;, painlessScript, params));</span>
-<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (waitRefresh) {</span>
-<span class="fc" id="L67">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params, int retryCount, long version) {
+<span class="fc" id="L71">        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)</span>
+<span class="fc" id="L72">                .retryOnConflict(retryCount)</span>
+<span class="fc" id="L73">                .script(new Script(ScriptType.INLINE, &quot;painless&quot;, painlessScript, params));</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (version &gt; 0) {</span>
+<span class="fc" id="L75">            request = request.version(version);</span>
         }
-<span class="fc" id="L69">        esClient.getClient().update(request).actionGet();</span>
-<span class="fc" id="L70">    }</span>
+<span class="fc" id="L77">        esClient.getClient().update(request).actionGet();</span>
+<span class="fc" id="L78">    }</span>
+
+    public void updateJson(String id, String jsonStr, long version) {
+<span class="fc" id="L81">        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)</span>
+<span class="fc" id="L82">                .doc(jsonStr, XContentType.JSON);</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (version &gt; 0) {</span>
+<span class="fc" id="L84">            request = request.version(version);</span>
+        }
+<span class="fc" id="L86">        esClient.getClient().update(request).actionGet();</span>
+<span class="fc" id="L87">    }</span>
 
     public void updateField(String id, String field, Object value) {
-<span class="fc" id="L73">        updateField(id, field, value, false);</span>
-<span class="fc" id="L74">    }</span>
+<span class="fc" id="L90">        updateField(id, field, value, 0);</span>
+<span class="fc" id="L91">    }</span>
 
-    public void updateField(String id, String field, Object value, boolean waitRefresh) {
-<span class="fc" id="L77">        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)</span>
-<span class="fc" id="L78">                .doc(Collections.singletonMap(field, value));</span>
-<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (waitRefresh) {</span>
-<span class="fc" id="L80">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+    public void updateField(String id, String field, Object value, long version) {
+<span class="fc" id="L94">        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)</span>
+<span class="fc" id="L95">                .doc(Collections.singletonMap(field, value));</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (version &gt; 0) {</span>
+<span class="fc" id="L97">            request = request.version(version);</span>
         }
-<span class="fc" id="L82">        esClient.getClient().update(request).actionGet();</span>
-<span class="fc" id="L83">    }</span>
+<span class="fc" id="L99">        esClient.getClient().update(request).actionGet();</span>
+<span class="fc" id="L100">    }</span>
 
     public void delete(String id) {
-<span class="nc" id="L86">        delete(id, false);</span>
-<span class="nc" id="L87">    }</span>
+<span class="fc" id="L103">        delete(id, false);</span>
+<span class="fc" id="L104">    }</span>
 
     public void delete(String id, boolean refresh) {
-<span class="nc" id="L90">        delete(esClient, bucket, id, refresh);</span>
-<span class="nc" id="L91">    }</span>
-
-    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
-<span class="nc" id="L94">        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);</span>
-<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (refresh) {</span>
-<span class="nc" id="L96">            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
-        }
-<span class="nc" id="L98">        request.execute().actionGet();</span>
-<span class="nc" id="L99">    }</span>
+<span class="fc" id="L107">        delete(esClient, bucket, id, refresh);</span>
+<span class="fc" id="L108">    }</span>
 
     public String indexDocument(Document document) {
-<span class="fc" id="L102">        return indexDocument(document, false);</span>
+<span class="fc" id="L111">        return indexDocument(document, false);</span>
     }
 
     public String indexDocument(Document document, boolean waitRefresh) {
-<span class="fc" id="L106">        IndexRequestBuilder request = indexRequest(document.getId(), waitRefresh);</span>
-<span class="fc" id="L107">        request = request.setSource(document.getSource(), XContentType.JSON);</span>
-<span class="fc" id="L108">        IndexResponse response = request.execute().actionGet();</span>
-<span class="fc" id="L109">        return response.getId();</span>
+<span class="fc" id="L115">        IndexRequestBuilder request = indexRequest(document.getId(), waitRefresh);</span>
+<span class="fc" id="L116">        request = request.setSource(document.getSource(), XContentType.JSON);</span>
+<span class="fc" id="L117">        IndexResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L118">        return response.getId();</span>
     }
 
     public void bulkIndex(Collection&lt;Document&gt; documents) {
-<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (documents != null) {</span>
-<span class="fc" id="L114">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
-<span class="fc bfc" id="L115" title="All 2 branches covered.">            for (Document document : documents) {</span>
-<span class="fc" id="L116">                IndexRequestBuilder indexRequest = prepareIndex();</span>
-<span class="pc bpc" id="L117" title="1 of 2 branches missed.">                if (document.getId() != null) {</span>
-<span class="fc" id="L118">                    indexRequest.setId(document.getId());</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L123">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            for (Document document : documents) {</span>
+<span class="fc" id="L125">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                if (document.getId() != null) {</span>
+<span class="fc" id="L127">                    indexRequest.setId(document.getId());</span>
                 }
-<span class="fc" id="L120">                indexRequest = indexRequest.setSource(document.getSource(), XContentType.JSON);</span>
-<span class="fc" id="L121">                request.add(indexRequest);</span>
-<span class="fc" id="L122">            }</span>
-<span class="fc" id="L123">            doBulkIndex(request);</span>
+<span class="fc" id="L129">                indexRequest = indexRequest.setSource(document.getSource(), XContentType.JSON);</span>
+<span class="fc" id="L130">                request.add(indexRequest);</span>
+<span class="fc" id="L131">            }</span>
+<span class="fc" id="L132">            doBulkIndex(request);</span>
         }
-<span class="fc" id="L125">    }</span>
+<span class="fc" id="L134">    }</span>
 
     private IndexRequestBuilder indexRequest(String id, boolean waitRefresh) {
-<span class="fc" id="L128">        IndexRequestBuilder request = prepareIndex();</span>
-<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (id != null) {</span>
-<span class="fc" id="L130">            request = request.setId(id);</span>
+<span class="fc" id="L137">        IndexRequestBuilder request = prepareIndex();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (id != null) {</span>
+<span class="fc" id="L139">            request = request.setId(id);</span>
         }
-<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (waitRefresh) {</span>
-<span class="fc" id="L133">            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">        if (waitRefresh) {</span>
+<span class="fc" id="L142">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
         }
-<span class="fc" id="L135">        return request;</span>
+<span class="fc" id="L144">        return request;</span>
     }
 
     public void bulkIndexJsonStr(Collection&lt;String&gt; documents) {
-<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (documents != null) {</span>
-<span class="fc" id="L140">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
-<span class="fc bfc" id="L141" title="All 2 branches covered.">            for (String document : documents) {</span>
-<span class="fc" id="L142">                IndexRequestBuilder indexRequest = prepareIndex();</span>
-<span class="fc" id="L143">                indexRequest = indexRequest.setSource(document, XContentType.JSON);</span>
-<span class="fc" id="L144">                request.add(indexRequest);</span>
-<span class="fc" id="L145">            }</span>
-<span class="fc" id="L146">            doBulkIndex(request);</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L149">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            for (String document : documents) {</span>
+<span class="fc" id="L151">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="fc" id="L152">                indexRequest = indexRequest.setSource(document, XContentType.JSON);</span>
+<span class="fc" id="L153">                request.add(indexRequest);</span>
+<span class="fc" id="L154">            }</span>
+<span class="fc" id="L155">            doBulkIndex(request);</span>
         }
-<span class="fc" id="L148">    }</span>
+<span class="fc" id="L157">    }</span>
 
     public IndexBatch batch() {
-<span class="fc" id="L151">        return batch(DEFAULT_BATCH_SIZE);</span>
+<span class="fc" id="L160">        return batch(DEFAULT_BATCH_SIZE);</span>
     }
 
     public IndexBatch batch(int size) {
-<span class="fc" id="L155">        return new IndexBatch(this, json(), size);</span>
+<span class="fc" id="L164">        return new IndexBatch(this, json(), size);</span>
     }
 
     private void doBulkIndex(BulkRequestBuilder request) {
-<span class="fc" id="L159">        BulkResponse response = request.execute().actionGet();</span>
-<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        if (response.hasFailures()) {</span>
-<span class="nc" id="L161">            throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
+<span class="fc" id="L168">        BulkResponse response = request.execute().actionGet();</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        if (response.hasFailures()) {</span>
+<span class="nc" id="L170">            throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
         }
-<span class="fc" id="L163">    }</span>
+<span class="fc" id="L172">    }</span>
 
     private IndexRequestBuilder prepareIndex() {
-<span class="fc" id="L166">        return esClient.getClient().prepareIndex(bucket.getIndex(), bucket.getType());</span>
+<span class="fc" id="L175">        return esClient.getClient().prepareIndex(bucket.getIndex(), bucket.getType());</span>
     }
 
     private Json json() {
-<span class="fc" id="L170">        return esClient.json();</span>
+<span class="fc" id="L179">        return esClient.json();</span>
     }
 
     public DataBucket bucket() {
-<span class="fc" id="L174">        return bucket;</span>
+<span class="fc" id="L183">        return bucket;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

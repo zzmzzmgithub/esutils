@@ -41,7 +41,8 @@ public class ScrollTest extends TestBase {
         int docCount = 194;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
-        List<Person> docs = search.scroll().scroll(QueryBuilders.matchAllQuery(), Person.class)
+        List<Person> docs = search.scroll().scroll(QueryBuilders.matchAllQuery())
+                .map(search.hitToPojo(Person.class))
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
     }
@@ -54,29 +55,12 @@ public class ScrollTest extends TestBase {
         int docCount = 194;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
-        List<Document> docs = search.scroll().scrollDocs(QueryBuilders.matchAllQuery())
+        List<Document> docs = search.scroll().scroll(QueryBuilders.matchAllQuery())
+                .map(Search.HIT_TO_DOC)
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
         for (Document doc : docs) {
             Assert.assertTrue(doc.getVersion() > 0);
         }
     }
-
-    @Test
-    public void testScrollNoFilter() throws Exception {
-        String index = "test-scroll-nofilter";
-        Indexer indexer = indexer(index, "type1");
-        Search search = search(index, "type1");
-        int docCount = 215;
-        try (IndexBatch batch = indexer.batch()) {
-            generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit));
-        }
-        waitForIndexedDocs(index, docCount);
-        List<SearchHit> docs = search.scroll().scroll()
-                .collect(Collectors.toList());
-        Assert.assertEquals(docs.size(), docCount);
-    }
-
-
 }
