@@ -1,5 +1,5 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-ElasticSearch Java Utilities,com.wirktop.esutils.index,Indexer,18,352,6,18,2,80,6,32,0,26
+ElasticSearch Java Utilities,com.wirktop.esutils.index,Indexer,52,334,8,18,10,78,9,32,2,26
 ElasticSearch Java Utilities,com.wirktop.esutils.index,IndexBatch,0,59,0,4,0,18,0,7,0,5
 ElasticSearch Java Utilities,com.wirktop.esutils.search,Search,90,227,5,13,18,48,9,25,6,19
 ElasticSearch Java Utilities,com.wirktop.esutils.search,ScrollIterator,6,113,3,9,1,27,3,7,0,4

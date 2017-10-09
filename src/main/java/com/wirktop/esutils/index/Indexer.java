@@ -31,14 +31,6 @@ public class Indexer {
         this.bucket = bucket;
     }
 
-    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
-        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
-        if (refresh) {
-            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
-        }
-        request.execute().actionGet();
-    }
-
     public String indexObject(Object doc) {
         return indexObject(null, doc, false);
     }
@@ -63,13 +55,21 @@ public class Indexer {
         return indexDocument(new Document(id, jsonDocument), refresh);
     }
 
-    public void updateScript(String id, String painlessScript, Map<String, Object> params) {
-        updateScript(id, painlessScript, params, 0, 0);
+    public void updateScriptRetry(String id, String painlessScript, Map<String, Object> params, int retryCount) {
+        UpdateRequest request = updateRequest(id)
+                .script(new Script(ScriptType.INLINE, "painless", painlessScript, params));
+        if (retryCount > 0) {
+            request = request.retryOnConflict(retryCount);
+        }
+        esClient.getClient().update(request).actionGet();
     }
 
-    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount, long version) {
-        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
-                .retryOnConflict(retryCount)
+    public void updateScript(String id, String painlessScript, Map<String, Object> params) {
+        updateScript(id, painlessScript, params, 0L);
+    }
+
+    public void updateScript(String id, String painlessScript, Map<String, Object> params, long version) {
+        UpdateRequest request = updateRequest(id)
                 .script(new Script(ScriptType.INLINE, "painless", painlessScript, params));
         if (version > 0) {
             request = request.version(version);
@@ -77,9 +77,10 @@ public class Indexer {
         esClient.getClient().update(request).actionGet();
     }
 
-    public void updateJson(String id, String jsonStr, long version) {
-        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
-                .doc(jsonStr, XContentType.JSON);
+
+    public void updateDoc(String id, String docJsonStr, long version) {
+        UpdateRequest request = updateRequest(id)
+                .doc(docJsonStr, XContentType.JSON);
         if (version > 0) {
             request = request.version(version);
         }
@@ -91,11 +92,19 @@ public class Indexer {
     }
 
     public void updateField(String id, String field, Object value, long version) {
-        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
+        UpdateRequest request = updateRequest(id)
                 .doc(Collections.singletonMap(field, value));
         if (version > 0) {
             request = request.version(version);
         }
+        esClient.getClient().update(request).actionGet();
+    }
+
+    public UpdateRequest updateRequest(String id) {
+        return new UpdateRequest(bucket.getIndex(), bucket.getType(), id);
+    }
+
+    public void update(UpdateRequest request) {
         esClient.getClient().update(request).actionGet();
     }
 
@@ -104,7 +113,11 @@ public class Indexer {
     }
 
     public void delete(String id, boolean refresh) {
-        delete(esClient, bucket, id, refresh);
+        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
+        if (refresh) {
+            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        }
+        request.execute().actionGet();
     }
 
     public String indexDocument(Document document) {

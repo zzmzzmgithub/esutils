@@ -236,7 +236,7 @@ public class IndexerTest extends TestBase {
         String id = indexer.indexJson(null, json.toString(), true);
 
         String script = "ctx._source.name = ctx._source.name + \" \" + params.appendValue;";
-        indexer.updateScript(id, script, Collections.singletonMap("appendValue", "edited"), 0, search.getDocument(id).getVersion());
+        indexer.updateScript(id, script, Collections.singletonMap("appendValue", "edited"), search.getDocument(id).getVersion());
         TestPojo pojo2 = search.get(id, TestPojo.class);
         Assert.assertEquals("John Smith edited", pojo2.getName());
     }
@@ -259,7 +259,7 @@ public class IndexerTest extends TestBase {
         String id = indexer.indexJson(null, json.toString(), true);
         Document document = search.getDocument(id);
         json.put("age", 119);
-        indexer.updateJson(id, json.toString(), document.getVersion());
+        indexer.updateDoc(id, json.toString(), document.getVersion());
         Document newDoc = search.getDocument(id);
         Assert.assertEquals(document.getVersion() + 1, newDoc.getVersion());
         Assert.assertEquals(119, new JSONObject(newDoc.getSource()).getInt("age"));
