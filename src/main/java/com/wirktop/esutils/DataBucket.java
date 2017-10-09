@@ -25,7 +25,7 @@ public class DataBucket {
     }
 
     public void createIndex(Admin admin, int shards) {
-        admin.createIndex(index, shards);
+        admin.createIndex(getIndex(), shards);
     }
 
     public String getIndex() {
