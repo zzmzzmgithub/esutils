@@ -60,11 +60,11 @@ ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost
 https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
-SomePojo document = ...
+SomePojo object = ...
 Indexer indexer = esClient.indexer(bucket);
-indexer.indexObject(document);
-indexer.indexObject(id, document);
-indexer.indexObject(id, document, true);
+indexer.indexObject(object);
+indexer.indexObject(id, object);
+indexer.indexObject(id, object, true);
 indexer.indexJson(jsonDocAsString);
 ```
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
