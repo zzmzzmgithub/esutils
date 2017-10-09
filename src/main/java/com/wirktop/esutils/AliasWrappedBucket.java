@@ -9,70 +9,74 @@ import java.util.regex.Pattern;
  */
 public class AliasWrappedBucket extends DataBucket {
 
-    protected AliasWrappedBucket(Admin admin, String index, String type) {
-        super(admin, index, type);
+    protected AliasWrappedBucket(String index, String type) {
+        super(index, type);
+    }
+
+    private static String uuid() {
+        return UUID.randomUUID().toString().toLowerCase().replaceAll("-", "");
     }
 
     @Override
-    protected void createIndex(int shards) {
+    public  void createIndex(Admin admin, int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex();
-        if (crtIndex == null || !getAdmin().indexExists(crtIndex)) {
+        String crtIndex = actualIndex(admin);
+        if (crtIndex == null || !admin.indexExists(crtIndex)) {
             String nextIndex = newIndexName();
-            getAdmin().createIndex(nextIndex, shards);
-            getAdmin().createAlias(alias, nextIndex);
+            admin.createIndex(nextIndex, shards);
+            admin.createAlias(alias, nextIndex);
         }
     }
 
-    protected void wipe() {
-        wipe(0);
+    public  void wipe(Admin admin) {
+        wipe(admin, 0);
     }
 
-    public void wipe(int shards) {
+    public void wipe(Admin admin, int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex();
+        String crtIndex = actualIndex(admin);
         String nextIndex = newIndexName();
-        getAdmin().createIndex(nextIndex, shards);
-        getAdmin().moveAlias(alias, crtIndex, nextIndex);
-        getAdmin().removeIndex(crtIndex);
+        admin.createIndex(nextIndex, shards);
+        admin.moveAlias(alias, crtIndex, nextIndex);
+        admin.removeIndex(crtIndex);
     }
 
-    public void refresh() {
-        refresh(0);
+    public void refresh(Admin admin) {
+        refresh(admin, 0);
     }
 
-    public void refresh(int shards) {
+    public void refresh(Admin admin, int shards) {
         String alias = getIndex();
-        String crtIndex = actualIndex();
+        String crtIndex = actualIndex(admin);
         String nextIndex = newIndexName();
-        getAdmin().createIndex(nextIndex, shards);
-        getAdmin().copyData(crtIndex, nextIndex);
-        getAdmin().moveAlias(alias, crtIndex, nextIndex);
-        getAdmin().removeIndex(crtIndex);
+        admin.createIndex(nextIndex, shards);
+        admin.copyData(crtIndex, nextIndex);
+        admin.moveAlias(alias, crtIndex, nextIndex);
+        admin.removeIndex(crtIndex);
     }
 
-    public DataBucket createNewIndex() {
-        return createNewIndex(0);
+    public DataBucket createNewIndex(Admin admin) {
+        return createNewIndex(admin, 0);
     }
 
-    public DataBucket createNewIndex(int shards) {
+    public DataBucket createNewIndex(Admin admin, int shards) {
         String index = newIndexName();
-        DataBucket dataBucket = new DataBucket(getAdmin(), index, getType());
-        getAdmin().createIndex(index, shards);
+        DataBucket dataBucket = new DataBucket(index, getType());
+        admin.createIndex(index, shards);
         return dataBucket;
     }
 
-    public AliasWrappedBucket wrap(DataBucket dataBucket, boolean deleteCurrentIndex) {
-        String oldIndex = actualIndex();
-        getAdmin().moveAlias(getIndex(), oldIndex, dataBucket.getIndex());
+    public AliasWrappedBucket wrap(Admin admin, DataBucket dataBucket, boolean deleteCurrentIndex) {
+        String oldIndex = actualIndex(admin);
+        admin.moveAlias(getIndex(), oldIndex, dataBucket.getIndex());
         if (deleteCurrentIndex) {
-            getAdmin().removeIndex(oldIndex);
+            admin.removeIndex(oldIndex);
         }
         return this;
     }
 
-    public String actualIndex() {
-        Collection<String> indices = getAdmin().indexesForAlias(getIndex());
+    public String actualIndex(Admin admin) {
+        Collection<String> indices = admin.indexesForAlias(getIndex());
         Pattern pattern = Pattern.compile(getIndex() + "\\..{32}");
         for (String index : indices) {
             if (pattern.matcher(index).matches()) {
@@ -84,9 +88,5 @@ public class AliasWrappedBucket extends DataBucket {
 
     private String newIndexName() {
         return getIndex() + "." + uuid();
-    }
-
-    private static String uuid() {
-        return UUID.randomUUID().toString().toLowerCase().replaceAll("-", "");
     }
 }

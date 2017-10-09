@@ -7,7 +7,7 @@
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 * Unit tests download and run an ElasticSearch instance locally (embedded is not supported anymore so
 we shouldn't be testing with it: https://www.elastic.co/blog/elasticsearch-the-server)
-
+* We are using [Jackson](https://github.com/FasterXML/jackson) for serialization/deserialization
 ## Highlights
 
 * Stream search results
@@ -30,7 +30,7 @@ try (IndexBatch batch = indexer.batch(100)) {
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.4.0</version>
+  <version>0.9.0</version>
 </dependency>
 ```
 

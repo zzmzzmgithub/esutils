@@ -18,10 +18,10 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testAliasWrapped() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrapped";
-        AliasWrappedBucket bucket = esClient().admin().aliasWrappedBucket(indexBaseName, "mytype");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "mytype");
         Admin admin = client.admin();
-        bucket.createIndex();
-        String index1 = bucket.actualIndex();
+        bucket.createIndex(admin);
+        String index1 = bucket.actualIndex(admin);
         Assert.assertTrue(admin.indexExists(index1));
         Assert.assertTrue(admin.aliasExists(indexBaseName));
         Assert.assertFalse(admin.indexExists(indexBaseName));
@@ -37,16 +37,16 @@ public class AliasWrappedBucketTest extends TestBase {
         assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(indexBaseName));
 
-        bucket.wipe(0);
+        bucket.wipe(admin, 0);
 
         Assert.assertFalse(admin.indexExists(index1));
-        Assert.assertTrue(admin.indexExists(bucket.actualIndex()));
+        Assert.assertTrue(admin.indexExists(bucket.actualIndex(admin)));
         Assert.assertTrue(admin.aliasExists(indexBaseName));
         Assert.assertFalse(admin.indexExists(indexBaseName));
 
         indexesForAlias = admin.indexesForAlias(indexBaseName);
         Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex());
+        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex(admin));
         Assert.assertNull(search.getMap(newId));
     }
 
@@ -54,15 +54,15 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testRefresh() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrappedrefresh";
-        AliasWrappedBucket bucket = esClient().admin().aliasWrappedBucket(indexBaseName, "mytype");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "mytype");
         Admin admin = client.admin();
-        bucket.createIndex();
+        bucket.createIndex(admin);
 
         Search search = client.search(bucket);
         Indexer indexer = client.indexer(bucket);
         indexStructuredDocs(267, indexer);
         waitForIndexedDocs(indexBaseName, 267);
-        bucket.refresh();
+        bucket.refresh(admin);
         Thread.sleep(1000);
         Assert.assertEquals(267, search.count());
     }
@@ -73,10 +73,10 @@ public class AliasWrappedBucketTest extends TestBase {
         String indexBaseName = "aliaswrappedcustom";
         String prefixyz = "prefixyz";
         String fullPrefix = prefixyz + "---";
-        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), esClient().admin().aliasWrappedBucket(indexBaseName, "mytype"), prefixyz);
+        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), new AliasWrappedBucket(indexBaseName, "mytype"), prefixyz);
         Admin admin = client.admin();
-        bucket.createIndex();
-        String index1 = bucket.actualIndex();
+        bucket.createIndex(admin);
+        String index1 = bucket.actualIndex(admin);
         Assert.assertTrue(admin.indexExists(index1));
         Assert.assertTrue(admin.aliasExists(fullPrefix + indexBaseName));
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
@@ -92,24 +92,25 @@ public class AliasWrappedBucketTest extends TestBase {
         assertSame(new JSONObject(document), storedDoc);
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
 
-        bucket.wipe();
+        bucket.wipe(admin);
 
         Assert.assertFalse(admin.indexExists(index1));
-        Assert.assertTrue(admin.indexExists(bucket.actualIndex()));
+        Assert.assertTrue(admin.indexExists(bucket.actualIndex(admin)));
         Assert.assertTrue(admin.aliasExists(fullPrefix + indexBaseName));
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
 
         indexesForAlias = admin.indexesForAlias(fullPrefix + indexBaseName);
         Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex());
+        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex(admin));
         Assert.assertNull(search.getMap(newId));
     }
 
     @Test
     public void testDataMove() throws Exception {
-        AliasWrappedBucket bucket = esClient().admin().aliasWrappedBucket("test-alias-move-to-new-wrapped-index", "notyourtype");
-        bucket.createIndex();
-        String index = bucket.actualIndex();
+        AliasWrappedBucket bucket = new AliasWrappedBucket("test-alias-move-to-new-wrapped-index", "notyourtype");
+        Admin admin = esClient().admin();
+        bucket.createIndex(admin);
+        String index = bucket.actualIndex(admin);
         String document = super.randomDoc();
         Search search = esClient().search(bucket);
         Indexer indexer = esClient().indexer(bucket);
@@ -117,13 +118,13 @@ public class AliasWrappedBucketTest extends TestBase {
         waitForIndexedDocs(index, 1);
         Assert.assertEquals(1, search.count());
 
-        DataBucket newBucket = bucket.createNewIndex();
+        DataBucket newBucket = bucket.createNewIndex(admin);
         Indexer newIndexer = esClient().indexer(newBucket);
         newIndexer.indexJson(randomDoc());
         newIndexer.indexJson(randomDoc());
         newIndexer.indexJson(randomDoc());
         waitForIndexedDocs(newBucket.getIndex(), 3);
-        AliasWrappedBucket newWrappedBucket = bucket.wrap(newBucket, true);
+        AliasWrappedBucket newWrappedBucket = bucket.wrap(admin, newBucket, true);
         Assert.assertFalse(esClient().admin().indexExists(index));
         Assert.assertEquals(3, esClient().search(newWrappedBucket).count());
     }
@@ -133,12 +134,12 @@ public class AliasWrappedBucketTest extends TestBase {
         private String prefix;
 
         protected CustomBucket(Admin admin, AliasWrappedBucket bucket, String prefix) {
-            super(admin, bucket.getIndex(), bucket.getType());
+            super(bucket.getIndex(), bucket.getType());
             this.prefix = prefix;
         }
 
         protected CustomBucket(Admin admin, String index, String type, String prefix) {
-            super(admin, index, type);
+            super(index, type);
             this.prefix = prefix;
         }
 

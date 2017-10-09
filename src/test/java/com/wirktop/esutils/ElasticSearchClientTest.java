@@ -1,13 +1,8 @@
 package com.wirktop.esutils;
 
-import com.wirktop.esutils.search.Search;
-import org.json.JSONObject;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Cosmin Marginean

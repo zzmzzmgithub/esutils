@@ -1,18 +1,23 @@
 package com.wirktop.esutils.search;
 
 import com.wirktop.esutils.DataBucket;
+import com.wirktop.esutils.Document;
 import com.wirktop.esutils.ElasticSearchClient;
+import com.wirktop.esutils.index.Indexer;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -21,6 +26,7 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
+    protected static final Function<SearchHit, Document> HIT_TO_DOCUMENT = (hit) -> new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());
     private ElasticSearchClient esClient;
     private DataBucket bucket;
 
@@ -53,6 +59,13 @@ public class Search {
         GetResponse response = get(id);
         return response.isExists()
                 ? esClient.json().toPojo(response.getSourceAsString(), docClass)
+                : null;
+    }
+
+    public Document getDocument(String id) {
+        GetResponse response = get(id);
+        return response.isExists()
+                ? new Document(id, response.getVersion(), response.getSourceAsString())
                 : null;
     }
 
@@ -89,40 +102,33 @@ public class Search {
     public SearchRequestBuilder searchRequest() {
         return esClient.getClient()
                 .prepareSearch(bucket.getIndex())
-                .setTypes(bucket.getType());
-    }
-
-    public <T> Stream<T> scroll(Class<T> pojoClass) {
-        return scroll(null, pojoClass);
-    }
-
-    public Stream<SearchHit> scroll() {
-        return scroll((QueryBuilder) null);
-    }
-
-    public <T> Stream<T> scroll(QueryBuilder query, Class<T> pojoClass) {
-        return scroll(query)
-                .map((hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass));
-    }
-
-    public Stream<SearchHit> scroll(QueryBuilder query) {
-        ScrollIterator iterator = new ScrollIterator(esClient, searchRequest(), query, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
-    }
-
-    public static Stream<SearchHit> scrollIndex(ElasticSearchClient esClient, String index) {
-        SearchRequestBuilder request = esClient.getClient().prepareSearch(index);
-        ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, ScrollIterator.DEFAULT_PAGE_SIZE, ScrollIterator.DEFAULT_KEEPALIVE);
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
+                .setTypes(bucket.getType())
+                .setVersion(true);
     }
 
     public <T> Stream<T> search(Class<T> pojoClass) {
-        return search(null, pojoClass);
+        return search(null, pojoClass, SearchIterator.DEFAULT_PAGE_SIZE);
+    }
+
+    public <T> Stream<T> search(Class<T> pojoClass, int pageSize) {
+        return search(null, pojoClass, pageSize);
     }
 
     public <T> Stream<T> search(QueryBuilder query, Class<T> pojoClass) {
-        return search(query)
+        return search(query, pojoClass, SearchIterator.DEFAULT_PAGE_SIZE);
+    }
+
+    public <T> Stream<T> search(QueryBuilder query, Class<T> pojoClass, int pageSize) {
+        return search(query, pageSize)
                 .map((hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass));
+    }
+
+    public Stream<Document> searchDocs(QueryBuilder query) {
+        return searchDocs(query, SearchIterator.DEFAULT_PAGE_SIZE);
+    }
+
+    public Stream<Document> searchDocs(QueryBuilder query, int pageSize) {
+        return search(query, pageSize).map(HIT_TO_DOCUMENT);
     }
 
     public Stream<SearchHit> search(QueryBuilder query) {
@@ -134,11 +140,48 @@ public class Search {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
+    public SearchResponse search(SearchRequestBuilder request) {
+        return request.execute().actionGet();
+    }
+
+    public void suggest(String suggestField, String text, int size, OutputStream outputStream) {
+        suggest(suggestField, text, size, outputStream, null, null);
+    }
+
+    public void suggest(String suggestField, String text, int size, OutputStream outputStream, String contextName, String contextValue) {
+        CompletionSuggestionBuilder completion = new CompletionSuggestionBuilder(suggestField)
+                .prefix(text);
+        if (size > 0) {
+            completion.size(size);
+        }
+        if (contextName != null) {
+            completion.contexts(new CompletionSuggestionBuilder.Contexts2x().addCategory(contextName, contextValue));
+        }
+
+        SuggestBuilder suggestions = new SuggestBuilder()
+                .addSuggestion("suggestions", completion);
+        SearchRequestBuilder request = esClient.getClient().prepareSearch(bucket.getIndex())
+                .suggest(suggestions);
+        search(request, outputStream);
+    }
+
     public DataBucket bucket() {
         return bucket;
     }
 
     public ElasticSearchClient esClient() {
         return esClient;
+    }
+
+    public Scroll scroll() {
+        return new Scroll(esClient, bucket);
+    }
+
+    public Indexer indexer() {
+        return new Indexer(esClient, bucket);
+    }
+
+    public boolean indexExists() {
+        return esClient.admin().indexExists(bucket.getIndex());
     }
 }

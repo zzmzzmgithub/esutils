@@ -1,20 +1,22 @@
 package com.wirktop.esutils;
 
-import java.util.Map;
-
 /**
  * @author Cosmin Marginean
  */
 public class Document {
 
     private String id;
+    private long version;
     private String source;
-
-    public Document() {
-    }
 
     public Document(String id, String source) {
         this.id = id;
+        this.source = source;
+    }
+
+    public Document(String id, long version, String source) {
+        this.id = id;
+        this.version = version;
         this.source = source;
     }
 
@@ -24,6 +26,14 @@ public class Document {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     public String getSource() {

@@ -1,6 +1,6 @@
 package com.wirktop.esutils;
 
-import com.wirktop.esutils.search.Search;
+import com.wirktop.esutils.search.Scroll;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,15 +43,20 @@ import java.util.List;
  */
 public class Admin {
 
-    private static final Logger log = LoggerFactory.getLogger(Admin.class);
-    private static final String ANYTYPE = "ANYTYPE";
     public static final String INDEX_NUMBER_OF_SHARDS = "index.number_of_shards";
     public static final int DATA_COPY_BATCH_SIZE = 100;
-
+    private static final Logger log = LoggerFactory.getLogger(Admin.class);
+    private static final String ANYTYPE = "ANYTYPE";
     private ElasticSearchClient esClient;
 
     public Admin(ElasticSearchClient esClient) {
         this.esClient = esClient;
+    }
+
+    private static void checkResponse(AcknowledgedResponse response) {
+        if (!response.isAcknowledged()) {
+            throw new SearchException("Error executing Elasticsearch request");
+        }
     }
 
     public void createTemplate(String templateName, String jsonContent) {
@@ -77,24 +81,6 @@ public class Admin {
 
     public void createIndex(String index) {
         createIndex(index, 0);
-    }
-
-    public DataBucket bucket(String index, String type) {
-        return new DataBucket(this, index, type);
-    }
-
-    public AliasWrappedBucket aliasWrappedBucket(String index, String type) {
-        return new AliasWrappedBucket(this, index, type);
-    }
-
-    public <T extends DataBucket> T bucket(String index, String type, Class<T> bucketClass) {
-        try {
-            return bucketClass.getConstructor(Admin.class, String.class, String.class)
-                    .newInstance(this, index, type);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            log.error(e.getMessage(), e);
-            throw new SearchException(e.getMessage(), e);
-        }
     }
 
     public void createIndex(String index, int shards) {
@@ -187,12 +173,6 @@ public class Admin {
         }
     }
 
-    private static void checkResponse(AcknowledgedResponse response) {
-        if (!response.isAcknowledged()) {
-            throw new SearchException("Error executing Elasticsearch request");
-        }
-    }
-
     public Collection<String> indexesForAlias(String alias) {
         GetAliasesRequest r = new GetAliasesRequest(alias);
         GetAliasesResponse response = esClient.getClient()
@@ -225,7 +205,7 @@ public class Admin {
 
     public void copyData(String srcIndex, String targetIndex) {
         List<SearchHit> hits = new ArrayList<>();
-        Search.scrollIndex(esClient, srcIndex)
+        Scroll.scrollIndex(esClient, srcIndex)
                 .forEach((hit) -> {
                     hits.add(hit);
                     if (hits.size() == DATA_COPY_BATCH_SIZE) {

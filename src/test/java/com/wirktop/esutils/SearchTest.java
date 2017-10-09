@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.index.Indexer;
+import com.wirktop.esutils.search.Scroll;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -31,19 +32,13 @@ public class SearchTest extends TestBase {
     @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(esClient().admin().bucket(null, "aaa"));
+                .search(new DataBucket(null, "aaa"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoType() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(esClient().admin().bucket("aaa", null));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNoAdmin() throws Exception {
-        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(new DataBucket(null, "aaa", "aaa"));
+                .search(new DataBucket("aaa", null));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -82,33 +77,17 @@ public class SearchTest extends TestBase {
     }
 
     @Test
-    public void testScrollHits() throws Exception {
-        String index = "test-scroll-hits";
-        Indexer indexer = indexer(index, "type1");
-        Search search = search(index, "type1");
-        int docCount = 267;
-        try (IndexBatch batch = indexer.batch()) {
-            generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit.toString()));
-        }
-        waitForIndexedDocs(index, docCount);
-        List<SearchHit> docs = search.scroll(QueryBuilders.matchAllQuery())
-                .collect(Collectors.toList());
-        Assert.assertEquals(docs.size(), docCount);
+    public void testGetDocument() throws Exception {
+        Indexer indexer = indexer("test-get-document", "type1");
+        Search search = search("test-get-document", "type1");
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String id = indexer.indexObject(document);
+        assertSamePojo1(search, document, id);
+        Document responseDoc = search.getDocument(id);
+        assertSame(new JSONObject(pojoToString(document)), new JSONObject(responseDoc.getSource()));
+        Assert.assertTrue(responseDoc.getVersion() > 0);
     }
 
-    @Test
-    public void testScrollPojo() throws Exception {
-        String index = "test-scroll-pojo";
-        Indexer indexer = indexer(index, "type1");
-        Search search = search(index, "type1");
-        int docCount = 194;
-        indexStructuredDocs(docCount, indexer);
-        waitForIndexedDocs(index, docCount);
-        List<Person> docs = search.scroll(QueryBuilders.matchAllQuery(), Person.class)
-                .collect(Collectors.toList());
-        Assert.assertEquals(docs.size(), docCount);
-    }
 
     @Test
     public void testSearchPojo() throws Exception {
@@ -123,51 +102,20 @@ public class SearchTest extends TestBase {
         Assert.assertEquals(docs.size(), docCount);
     }
 
-    private static final class Person {
-        private String name;
-        private int age;
-        private String gender;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public int getAge() {
-            return age;
-        }
-
-        public void setAge(int age) {
-            this.age = age;
-        }
-
-        public String getGender() {
-            return gender;
-        }
-
-        public void setGender(String gender) {
-            this.gender = gender;
-        }
-    }
-
-
     @Test
-    public void testScrollNoFilter() throws Exception {
-        String index = "test-scroll-nofilter";
+    public void testSearchDocs() throws Exception {
+        String index = "test-search-docs";
         Indexer indexer = indexer(index, "type1");
         Search search = search(index, "type1");
-        int docCount = 215;
-        try (IndexBatch batch = indexer.batch()) {
-            generateDocuments(docCount, false)
-                    .forEach((hit) -> batch.add(UUID.randomUUID().toString(), hit));
-        }
+        int docCount = 243;
+        indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
-        List<SearchHit> docs = search.scroll()
+        List<Document> docs = search.searchDocs(QueryBuilders.matchAllQuery())
                 .collect(Collectors.toList());
         Assert.assertEquals(docs.size(), docCount);
+        for (Document doc : docs) {
+            Assert.assertTrue(doc.getVersion() > 0);
+        }
     }
 
     @Test
@@ -269,7 +217,7 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testCustomBucket() throws Exception {
-        CustomBucket bucket = new CustomBucket(esClient().admin(), "private-custom-index", "mytype", "custom1");
+        CustomBucket bucket = new CustomBucket("private-custom-index", "mytype", "custom1");
         Indexer indexer = esClient().indexer(bucket);
         String document = randomDoc();
         String id = indexer.indexJson(document);
@@ -280,7 +228,7 @@ public class SearchTest extends TestBase {
 
     @Test(expected = SearchException.class)
     public void testFailDeserialize() throws Exception {
-        DataBucket bucket = esClient().admin().bucket("test-fail-deserialize", "typemapped");
+        DataBucket bucket = new DataBucket("test-fail-deserialize", "typemapped");
         Search search = esClient().search(bucket);
         Indexer indexer = esClient().indexer(bucket);
         indexer.indexJson("a", randomDoc());
@@ -300,24 +248,23 @@ public class SearchTest extends TestBase {
                 .collect(Collectors.toList());
 
         String index = "test-scroll-full-index";
-        client.indexer(esClient().admin().bucket(index, "type1"))
+        client.indexer(new DataBucket(index, "type1"))
                 .bulkIndex(docs1);
         waitForIndexedDocs(index, 100);
 
-        client.indexer(esClient().admin().bucket(index, "type2"))
+        client.indexer(new DataBucket(index, "type2"))
                 .bulkIndex(docs2);
         waitForIndexedDocs(index, 200);
 
-        long count = Search.scrollIndex(esClient(), index)
-                .count();
+        long count = Scroll.scrollIndex(esClient(), index).count();
         Assert.assertEquals(200, count);
-        Assert.assertEquals(100, client.search(esClient().admin().bucket(index, "type1")).count());
-        Assert.assertEquals(100, client.search(esClient().admin().bucket(index, "type2")).count());
+        Assert.assertEquals(100, client.search(new DataBucket(index, "type1")).count());
+        Assert.assertEquals(100, client.search(new DataBucket(index, "type2")).count());
     }
 
     @Test
     public void testCustomObjectMapper() throws Exception {
-        DataBucket bucket = esClient().admin().bucket("test-custom-object-mapper", "typemapped");
+        DataBucket bucket = new DataBucket("test-custom-object-mapper", "typemapped");
         Search search = esClient().search(bucket);
         Indexer indexer = esClient().indexer(bucket);
         PojoSerialize pojo = new PojoSerialize();
@@ -333,7 +280,7 @@ public class SearchTest extends TestBase {
         module.addDeserializer(Instant.class, new InstantDeserializer());
         objectMapper.registerModule(module);
 
-        DataBucket bucket2 = esClient().admin().bucket("test-custom-object-mapper2", "typemapped");
+        DataBucket bucket2 = new DataBucket("test-custom-object-mapper2", "typemapped");
         Search search2 = esClient().search(bucket2);
         esClient().setObjectMapper(objectMapper);
         String newId = esClient().indexer(bucket2).indexObject(pojo);
@@ -359,8 +306,8 @@ public class SearchTest extends TestBase {
 
         private String prefix;
 
-        protected CustomBucket(Admin admin, String index, String type, String prefix) {
-            super(admin, index, type);
+        protected CustomBucket(String index, String type, String prefix) {
+            super(index, type);
             this.prefix = prefix;
         }
 

@@ -14,8 +14,8 @@ import java.util.Iterator;
  */
 public class ScrollIterator implements Iterator&lt;SearchHit&gt; {
 
-<span class="fc" id="L17">    public static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(30);</span>
-    public static final int DEFAULT_PAGE_SIZE = 200;
+<span class="fc" id="L17">    protected static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(30);</span>
+    protected static final int DEFAULT_PAGE_SIZE = 200;
 
     private ElasticSearchClient esClient;
     private String scrollId;
@@ -26,7 +26,7 @@ public class ScrollIterator implements Iterator&lt;SearchHit&gt; {
 
 <span class="fc" id="L27">    public ScrollIterator(ElasticSearchClient esClient, SearchRequestBuilder request, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {</span>
 <span class="fc" id="L28">        this.esClient = esClient;</span>
-<span class="fc" id="L29">        this.pageSize = pageSize;</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        this.pageSize = pageSize &gt; 0 ? pageSize : DEFAULT_PAGE_SIZE;</span>
 
 <span class="fc" id="L31">        request.setScroll(keepAlive)</span>
 <span class="fc" id="L32">                .setSize(pageSize)</span>

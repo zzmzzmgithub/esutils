@@ -3,12 +3,18 @@ package com.wirktop.esutils.index;
 import com.wirktop.esutils.*;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Cosmin Marginean
@@ -47,6 +53,49 @@ public class Indexer {
 
     public String indexJson(String id, String jsonDocument, boolean refresh) {
         return indexDocument(new Document(id, jsonDocument), refresh);
+    }
+
+    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount) {
+        updateScript(id, painlessScript, params, retryCount, false);
+    }
+
+    public void updateScript(String id, String painlessScript, Map<String, Object> params, int retryCount, boolean waitRefresh) {
+        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
+                .retryOnConflict(retryCount)
+                .script(new Script(ScriptType.INLINE, "painless", painlessScript, params));
+        if (waitRefresh) {
+            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        }
+        esClient.getClient().update(request).actionGet();
+    }
+
+    public void updateField(String id, String field, Object value) {
+        updateField(id, field, value, false);
+    }
+
+    public void updateField(String id, String field, Object value, boolean waitRefresh) {
+        UpdateRequest request = new UpdateRequest(bucket.getIndex(), bucket.getType(), id)
+                .doc(Collections.singletonMap(field, value));
+        if (waitRefresh) {
+            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        }
+        esClient.getClient().update(request).actionGet();
+    }
+
+    public void delete(String id) {
+        delete(id, false);
+    }
+
+    public void delete(String id, boolean refresh) {
+        delete(esClient, bucket, id, refresh);
+    }
+
+    protected static void delete(ElasticSearchClient esClient, DataBucket bucket, String id, boolean refresh) {
+        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
+        if (refresh) {
+            request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+        }
+        request.execute().actionGet();
     }
 
     public String indexDocument(Document document) {

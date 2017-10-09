@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -182,6 +183,67 @@ public class IndexerTest extends TestBase {
         Assert.assertEquals(response.getHits().getTotalHits(), 100);
     }
 
+    @Test
+    public void testUpdateField() throws Exception {
+        Indexer indexer = indexerTcp("testupdatefield", "typeupdate");
+        Search search = searchTcp("testupdatefield", "typeupdate");
+
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+        TestPojo pojo1 = search.get(id, TestPojo.class);
+        Assert.assertEquals(92, pojo1.getAge());
+
+        indexer.updateField(id, "age", 83);
+        TestPojo pojo2 = search.get(id, TestPojo.class);
+        Assert.assertEquals(83, pojo2.getAge());
+    }
+
+    @Test
+    public void testUpdateFieldRefresh() throws Exception {
+        Indexer indexer = indexerTcp("testupdatefieldrefresh", "typeupdate");
+        Search search = searchTcp("testupdatefieldrefresh", "typeupdate");
+
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+        TestPojo pojo1 = search.get(id, TestPojo.class);
+        Assert.assertEquals(92, pojo1.getAge());
+
+        indexer.updateField(id, "age", 83, true);
+        TestPojo pojo2 = search.get(id, TestPojo.class);
+        Assert.assertEquals(83, pojo2.getAge());
+    }
+
+    @Test
+    public void testUpdateScript() throws Exception {
+        Indexer indexer = indexerTcp("testupdatescript", "typeupdate");
+        Search search = searchTcp("testupdatescript", "typeupdate");
+
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+        TestPojo pojo1 = search.get(id, TestPojo.class);
+        Assert.assertEquals(92, pojo1.getAge());
+
+        String script = "ctx._source.name = ctx._source.name + \" \" + params.appendValue;";
+        indexer.updateScript(id, script, Collections.singletonMap("appendValue", "edited"), 0);
+        TestPojo pojo2 = search.get(id, TestPojo.class);
+        Assert.assertEquals("John Smith edited", pojo2.getName());
+    }
+
+    @Test
+    public void testUpdateScriptRefresh() throws Exception {
+        Indexer indexer = indexerTcp("testupdatescriptrefresh", "typeupdate");
+        Search search = searchTcp("testupdatescriptrefresh", "typeupdate");
+
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+        TestPojo pojo1 = search.get(id, TestPojo.class);
+        Assert.assertEquals(92, pojo1.getAge());
+
+        String script = "ctx._source.name = ctx._source.name + \" \" + params.appendValue;";
+        indexer.updateScript(id, script, Collections.singletonMap("appendValue", "edited"), 0, true);
+        TestPojo pojo2 = search.get(id, TestPojo.class);
+        Assert.assertEquals("John Smith edited", pojo2.getName());
+    }
 
     private String indexAndTestString(Indexer indexer, String id, String docName) throws IOException {
         JSONObject document = docAsJson(docName);
