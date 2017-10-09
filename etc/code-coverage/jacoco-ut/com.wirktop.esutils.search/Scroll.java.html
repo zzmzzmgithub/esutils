@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Scroll.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils.search</a> &gt; <span class="el_source">Scroll.java</span></div><h1>Scroll.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils.search;
+
+import com.wirktop.esutils.DataBucket;
+import com.wirktop.esutils.Document;
+import com.wirktop.esutils.ElasticSearchClient;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
+
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static com.wirktop.esutils.search.Search.HIT_TO_DOCUMENT;
+
+/**
+ * @author Cosmin Marginean
+ */
+public class Scroll {
+
+    private ElasticSearchClient esClient;
+    private DataBucket bucket;
+
+<span class="fc" id="L24">    public Scroll(ElasticSearchClient esClient, DataBucket bucket) {</span>
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">        if (esClient == null) {</span>
+<span class="nc" id="L26">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+        }
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if (bucket == null) {</span>
+<span class="nc" id="L29">            throw new IllegalArgumentException(&quot;bucket argument cannot be null&quot;);</span>
+        }
+<span class="fc" id="L31">        this.esClient = esClient;</span>
+<span class="fc" id="L32">        this.bucket = bucket;</span>
+<span class="fc" id="L33">    }</span>
+
+    public static Stream&lt;SearchHit&gt; scrollIndex(ElasticSearchClient esClient, String index) {
+<span class="fc" id="L36">        return scrollIndex(esClient, index, SearchIterator.DEFAULT_PAGE_SIZE);</span>
+    }
+
+    public static Stream&lt;SearchHit&gt; scrollIndex(ElasticSearchClient esClient, String index, int pageSize) {
+<span class="fc" id="L40">        SearchRequestBuilder request = esClient.getClient().prepareSearch(index);</span>
+<span class="fc" id="L41">        ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, pageSize, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L42">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    }
+
+    public &lt;T&gt; Stream&lt;T&gt; scroll(Class&lt;T&gt; pojoClass, int pageSize) {
+<span class="nc" id="L46">        return scroll(null, pojoClass, pageSize);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; scroll(int pageSize) {
+<span class="nc" id="L50">        return scroll(null, pageSize, true);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; scroll() {
+<span class="fc" id="L54">        return scroll(null, ScrollIterator.DEFAULT_PAGE_SIZE, true);</span>
+    }
+
+    public &lt;T&gt; Stream&lt;T&gt; scroll(QueryBuilder query, Class&lt;T&gt; pojoClass) {
+<span class="fc" id="L58">        return scroll(query, pojoClass, ScrollIterator.DEFAULT_PAGE_SIZE);</span>
+    }
+
+    public &lt;T&gt; Stream&lt;T&gt; scroll(QueryBuilder query, Class&lt;T&gt; pojoClass, int pageSize) {
+<span class="fc" id="L62">        return scroll(query, pageSize, true)</span>
+<span class="fc" id="L63">                .map((hit) -&gt; esClient.json().toPojo(hit.getSourceAsString(), pojoClass));</span>
+    }
+
+    public Stream&lt;Document&gt; scrollDocs(QueryBuilder query) {
+<span class="fc" id="L67">        return scroll(query, ScrollIterator.DEFAULT_PAGE_SIZE, true).map(HIT_TO_DOCUMENT);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; scroll(QueryBuilder query) {
+<span class="fc" id="L71">        return scroll(query, ScrollIterator.DEFAULT_PAGE_SIZE, true);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; scroll(QueryBuilder query, int pageSize, boolean fetchSource) {
+<span class="fc" id="L75">        ScrollIterator iterator = new ScrollIterator(esClient, searchRequest(), query, fetchSource, pageSize, ScrollIterator.DEFAULT_KEEPALIVE);</span>
+<span class="fc" id="L76">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    }
+
+    public SearchRequestBuilder searchRequest() {
+<span class="fc" id="L80">        return esClient.getClient()</span>
+<span class="fc" id="L81">                .prepareSearch(bucket.getIndex())</span>
+<span class="fc" id="L82">                .setTypes(bucket.getType())</span>
+<span class="fc" id="L83">                .setVersion(true);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

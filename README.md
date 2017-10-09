@@ -90,17 +90,18 @@ try (IndexBatch batch = indexer.batch(100)) {
 }
 ```
 
-## Searching
+## Searching and Scrolling
 https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html
+https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Scroll.html
 
-A series of search and scroll methods return a `Stream` that can be used to transparently process the complete result set, without having to worry about paging.
+A series of search methods return a `Stream` that can be used to transparently process the complete result set, without having to worry about paging.
 ```
 // Search (ES _search)
 search.seach(QueryBuilders.matchAllQuery(), 10)
                 .forEach((hit) -> {...});
                 
 // Scroll (ES _scroll)
-search.scroll(QueryBuilders.matchAllQuery())
+search.scroll().scroll(QueryBuilders.matchAllQuery())
                 .forEach((hit) -> {...});
 
 // Seaveral get by _id methods
