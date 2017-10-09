@@ -37,6 +37,7 @@ try (IndexBatch batch = indexer.batch()) {
 ## High level concepts
 The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component
 which produces sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html),
+[`Scroll`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Scroll.html)
 [`Indexer`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html) or
 [`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
 
