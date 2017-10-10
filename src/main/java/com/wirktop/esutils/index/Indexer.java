@@ -61,7 +61,7 @@ public class Indexer {
         if (retryCount > 0) {
             request = request.retryOnConflict(retryCount);
         }
-        esClient.getClient().update(request).actionGet();
+        update(request);
     }
 
     public void updateScript(String id, String painlessScript, Map<String, Object> params) {
@@ -74,7 +74,7 @@ public class Indexer {
         if (version > 0) {
             request = request.version(version);
         }
-        esClient.getClient().update(request).actionGet();
+        update(request);
     }
 
 
@@ -84,7 +84,7 @@ public class Indexer {
         if (version > 0) {
             request = request.version(version);
         }
-        esClient.getClient().update(request).actionGet();
+        update(request);
     }
 
     public void updateField(String id, String field, Object value) {
@@ -97,7 +97,7 @@ public class Indexer {
         if (version > 0) {
             request = request.version(version);
         }
-        esClient.getClient().update(request).actionGet();
+        update(request);
     }
 
     public UpdateRequest updateRequest(String id) {

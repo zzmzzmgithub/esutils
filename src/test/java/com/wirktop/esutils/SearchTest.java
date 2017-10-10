@@ -8,6 +8,7 @@ import com.wirktop.esutils.search.Scroll;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -290,6 +291,57 @@ public class SearchTest extends TestBase {
         Assert.assertEquals("{\"time\":\"" + time.toString() + "\"}", str);
         Assert.assertEquals(time, search2.get(newId, PojoSerialize.class).getTime());
         Assert.assertEquals(time.toString(), new JSONObject(search2.getJson(newId)).getString("time"));
+    }
+
+    @Test
+    public void testSuggestions() throws Exception {
+        Indexer indexer = indexerTcp("testsuggestions", "typex");
+        Search search = searchTcp("testsuggestions", "typex");
+        esClient().admin().createTemplate("testsuggestions", getClass().getResourceAsStream("/templates/template-suggestions.json"));
+
+        String completionField = "synthetic_completionsuggestion";
+
+        JSONObject json1 = docAsJson("pojo1.json");
+        json1.put(completionField, new JSONObject("{\"input\": [\"random\", \"stuff\", \"hamlet\"]}"));
+        String id1 = indexer.indexJson(null, json1.toString(), true);
+
+        JSONObject json2 = docAsJson("pojo2.json");
+        json2.put(completionField, new JSONObject("{\"input\": [\"random\", \"stuff\", \"hugo\"]}"));
+        String id2 = indexer.indexJson(null, json2.toString(), true);
+
+        Assert.assertEquals(1, suggest(search, completionField, "hamlet").length());
+        Assert.assertEquals(1, suggest(search, completionField, "hugo").length());
+        Assert.assertEquals(0, suggest(search, completionField, "hugo", "male").length());
+
+        Assert.assertEquals(2, suggest(search, completionField, "h").length());
+        Assert.assertEquals(1, suggest(search, completionField, "h", "male").length());
+        Assert.assertEquals(1, suggest(search, completionField, "h", "female").length());
+
+        Assert.assertEquals(2, suggest(search, completionField, "stuff").length());
+        Assert.assertEquals(1, suggest(search, completionField, "stuff", "male").length());
+        Assert.assertEquals(1, suggest(search, completionField, "stuff", "female").length());
+
+        Assert.assertEquals(2, suggest(search, completionField, "random").length());
+        Assert.assertEquals(1, suggest(search, completionField, "random", "male").length());
+        Assert.assertEquals(1, suggest(search, completionField, "random", "female").length());
+    }
+
+    public JSONArray suggest(Search search, String completionField, String prefix) {
+        ByteArrayOutputStream osSuggest1 = new ByteArrayOutputStream();
+        search.suggest(completionField, prefix, 5, osSuggest1);
+        String source1 = new String(osSuggest1.toByteArray(), StandardCharsets.UTF_8);
+        System.out.println(source1);
+        JSONObject response1 = new JSONObject(source1);
+        return response1.getJSONObject("suggest").getJSONArray("suggestions." + completionField).getJSONObject(0).getJSONArray("options");
+    }
+
+    public JSONArray suggest(Search search, String completionField, String prefix, String gender) {
+        ByteArrayOutputStream osSuggest1 = new ByteArrayOutputStream();
+        search.suggest(completionField, prefix, 5, osSuggest1, "gender", gender);
+        String source1 = new String(osSuggest1.toByteArray(), StandardCharsets.UTF_8);
+        System.out.println(source1);
+        JSONObject response1 = new JSONObject(source1);
+        return response1.getJSONObject("suggest").getJSONArray("suggestions." + completionField).getJSONObject(0).getJSONArray("options");
     }
 
     public static final class PojoSerialize {

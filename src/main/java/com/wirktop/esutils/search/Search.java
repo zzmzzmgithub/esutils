@@ -141,7 +141,7 @@ public class Search {
         }
 
         SuggestBuilder suggestions = new SuggestBuilder()
-                .addSuggestion("suggestions", completion);
+                .addSuggestion("suggestions." + suggestField, completion);
         SearchRequestBuilder request = esClient.getClient().prepareSearch(bucket.getIndex())
                 .suggest(suggestions);
         search(request, outputStream);

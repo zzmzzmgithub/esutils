@@ -4,6 +4,7 @@ import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Search;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.mapper.MapperParsingException;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -51,7 +52,6 @@ public class IndexerTest extends TestBase {
 
     @Test(expected = SearchException.class)
     public void testIndexPojoFail() throws Exception {
-        Search search = search("index1", "type1");
         Indexer indexer = indexer("index1", "type1");
         indexer.indexObject("asdasdsa", new TestPojoBroken(), false);
     }
@@ -252,10 +252,38 @@ public class IndexerTest extends TestBase {
     }
 
     @Test
+    public void testDeleteRefresh() throws Exception {
+        Indexer indexer = indexerTcp("testdeleterefresh", "typex");
+        Search search = searchTcp("testdeleterefresh", "typex");
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+        indexer.delete(id, true);
+        Assert.assertNull(search.getJson(id));
+    }
+
+    @Test(expected = VersionConflictEngineException.class)
+    public void testVersionUpdateConflict() throws Exception {
+        Indexer indexer = indexerTcp("testversionupdateconflict", "typex");
+        Search search = searchTcp("testversionupdateconflict", "typex");
+        JSONObject json = super.docAsJson("pojo1.json");
+        String id = indexer.indexJson(null, json.toString(), true);
+
+        Document document = search.getDocument(id);
+        long v1 = document.getVersion();
+
+        json.put("age", 23);
+        indexer.updateDoc(id, json.toString(), v1);
+        Assert.assertEquals(23, new JSONObject(search.getDocument(id).getSource()).getInt("age"));
+
+        json.put("age", 32);
+        indexer.updateDoc(id, json.toString(), v1);
+    }
+
+    @Test
     public void testVersionUpdateJson() throws Exception {
         Indexer indexer = indexerTcp("testversionupdatejson", "typex");
         Search search = searchTcp("testversionupdatejson", "typex");
-        JSONObject json = super.docAsJson("pojo1.json");
+        JSONObject json = docAsJson("pojo1.json");
         String id = indexer.indexJson(null, json.toString(), true);
         Document document = search.getDocument(id);
         json.put("age", 119);

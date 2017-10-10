@@ -7,8 +7,17 @@ public class TestPojo {
 
     private String id;
     private String name;
+    private String gender;
     private int age;
     private double height;
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 
     public String getId() {
         return id;
@@ -52,7 +61,8 @@ public class TestPojo {
         if (age != testPojo.age) return false;
         if (Double.compare(testPojo.height, height) != 0) return false;
         if (id != null ? !id.equals(testPojo.id) : testPojo.id != null) return false;
-        return name != null ? name.equals(testPojo.name) : testPojo.name == null;
+        if (name != null ? !name.equals(testPojo.name) : testPojo.name != null) return false;
+        return gender != null ? gender.equals(testPojo.gender) : testPojo.gender == null;
     }
 
     @Override
@@ -61,6 +71,7 @@ public class TestPojo {
         long temp;
         result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (gender != null ? gender.hashCode() : 0);
         result = 31 * result + age;
         temp = Double.doubleToLongBits(height);
         result = 31 * result + (int) (temp ^ (temp >>> 32));

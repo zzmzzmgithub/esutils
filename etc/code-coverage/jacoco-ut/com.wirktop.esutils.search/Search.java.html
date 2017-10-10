@@ -127,25 +127,25 @@ public class Search {
     }
 
     public void suggest(String suggestField, String text, int size, OutputStream outputStream) {
-<span class="nc" id="L130">        suggest(suggestField, text, size, outputStream, null, null);</span>
-<span class="nc" id="L131">    }</span>
+<span class="fc" id="L130">        suggest(suggestField, text, size, outputStream, null, null);</span>
+<span class="fc" id="L131">    }</span>
 
     public void suggest(String suggestField, String text, int size, OutputStream outputStream, String contextName, String contextValue) {
-<span class="nc" id="L134">        CompletionSuggestionBuilder completion = new CompletionSuggestionBuilder(suggestField)</span>
-<span class="nc" id="L135">                .prefix(text);</span>
-<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (size &gt; 0) {</span>
-<span class="nc" id="L137">            completion.size(size);</span>
+<span class="fc" id="L134">        CompletionSuggestionBuilder completion = new CompletionSuggestionBuilder(suggestField)</span>
+<span class="fc" id="L135">                .prefix(text);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (size &gt; 0) {</span>
+<span class="fc" id="L137">            completion.size(size);</span>
         }
-<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (contextName != null) {</span>
-<span class="nc" id="L140">            completion.contexts(new CompletionSuggestionBuilder.Contexts2x().addCategory(contextName, contextValue));</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (contextName != null) {</span>
+<span class="fc" id="L140">            completion.contexts(new CompletionSuggestionBuilder.Contexts2x().addCategory(contextName, contextValue));</span>
         }
 
-<span class="nc" id="L143">        SuggestBuilder suggestions = new SuggestBuilder()</span>
-<span class="nc" id="L144">                .addSuggestion(&quot;suggestions&quot;, completion);</span>
-<span class="nc" id="L145">        SearchRequestBuilder request = esClient.getClient().prepareSearch(bucket.getIndex())</span>
-<span class="nc" id="L146">                .suggest(suggestions);</span>
-<span class="nc" id="L147">        search(request, outputStream);</span>
-<span class="nc" id="L148">    }</span>
+<span class="fc" id="L143">        SuggestBuilder suggestions = new SuggestBuilder()</span>
+<span class="fc" id="L144">                .addSuggestion(&quot;suggestions.&quot; + suggestField, completion);</span>
+<span class="fc" id="L145">        SearchRequestBuilder request = esClient.getClient().prepareSearch(bucket.getIndex())</span>
+<span class="fc" id="L146">                .suggest(suggestions);</span>
+<span class="fc" id="L147">        search(request, outputStream);</span>
+<span class="fc" id="L148">    }</span>
 
     public DataBucket bucket() {
 <span class="fc" id="L151">        return bucket;</span>
