@@ -308,7 +308,7 @@ public class SearchTest extends TestBase {
 
         private String prefix;
 
-        protected CustomBucket(String index, String type, String prefix) {
+        public CustomBucket(String index, String type, String prefix) {
             super(index, type);
             this.prefix = prefix;
         }

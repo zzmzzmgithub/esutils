@@ -8,7 +8,7 @@ public class DataBucket {
     private String index;
     private String type;
 
-    protected DataBucket(String index, String type) {
+    public DataBucket(String index, String type) {
         if (index == null) {
             throw new IllegalArgumentException("index argument cannot be null");
         }

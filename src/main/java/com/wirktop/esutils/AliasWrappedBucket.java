@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  */
 public class AliasWrappedBucket extends DataBucket {
 
-    protected AliasWrappedBucket(String index, String type) {
+    public AliasWrappedBucket(String index, String type) {
         super(index, type);
     }
 

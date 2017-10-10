@@ -30,7 +30,7 @@ try (IndexBatch batch = indexer.batch()) {
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.9.0</version>
+  <version>0.9.1</version>
 </dependency>
 ```
 
