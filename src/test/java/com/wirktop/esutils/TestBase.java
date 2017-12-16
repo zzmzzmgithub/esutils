@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.glassfish.jersey.client.ClientConfig;
@@ -40,7 +40,7 @@ public abstract class TestBase {
         Settings settings = Settings.builder().put("cluster.name", CLUSTER).build();
         client = new PreBuiltTransportClient(settings);
         InetAddress address = InetAddress.getByName("localhost");
-        client.addTransportAddress(new InetSocketTransportAddress(address, 9300));
+        client.addTransportAddress(new TransportAddress(address, 9300));
         esClient = new ElasticSearchClient(client());
     }
 

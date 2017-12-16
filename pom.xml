@@ -6,7 +6,7 @@
 
     <groupId>com.wirktop</groupId>
     <artifactId>esutils</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
     <packaging>jar</packaging>
 
     <name>ElasticSearch Java Utilities</name>
@@ -47,7 +47,7 @@
     </distributionManagement>
 
     <properties>
-        <elasticsearch.version>5.5.2</elasticsearch.version>
+        <elasticsearch.version>6.1.0</elasticsearch.version>
         <commons-io.version>2.5</commons-io.version>
         <jackson.version>2.9.0</jackson.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -129,7 +129,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.7.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>

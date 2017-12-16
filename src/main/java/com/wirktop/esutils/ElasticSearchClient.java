@@ -7,7 +7,7 @@ import com.wirktop.esutils.search.Search;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class ElasticSearchClient {
                 String hostname = addressElements[0].trim();
                 int port = Integer.parseInt(addressElements[1].trim());
                 InetAddress byName = InetAddress.getByName(hostname);
-                client.addTransportAddress(new InetSocketTransportAddress(byName, port));
+                client.addTransportAddress(new TransportAddress(byName, port));
             }
             return client;
         } catch (UnknownHostException e) {

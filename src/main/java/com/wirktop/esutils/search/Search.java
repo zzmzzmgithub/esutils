@@ -10,8 +10,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.suggest.SuggestBuilder;
-import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -124,27 +122,6 @@ public class Search {
 
     public SearchResponse search(SearchRequestBuilder request) {
         return request.execute().actionGet();
-    }
-
-    public void suggest(String suggestField, String text, int size, OutputStream outputStream) {
-        suggest(suggestField, text, size, outputStream, null, null);
-    }
-
-    public void suggest(String suggestField, String text, int size, OutputStream outputStream, String contextName, String contextValue) {
-        CompletionSuggestionBuilder completion = new CompletionSuggestionBuilder(suggestField)
-                .prefix(text);
-        if (size > 0) {
-            completion.size(size);
-        }
-        if (contextName != null) {
-            completion.contexts(new CompletionSuggestionBuilder.Contexts2x().addCategory(contextName, contextValue));
-        }
-
-        SuggestBuilder suggestions = new SuggestBuilder()
-                .addSuggestion("suggestions." + suggestField, completion);
-        SearchRequestBuilder request = esClient.getClient().prepareSearch(bucket.getIndex())
-                .suggest(suggestions);
-        search(request, outputStream);
     }
 
     public DataBucket bucket() {
