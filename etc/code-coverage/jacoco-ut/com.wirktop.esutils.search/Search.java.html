@@ -10,6 +10,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -24,124 +25,136 @@ import java.util.stream.StreamSupport;
  */
 public class Search {
 
-<span class="fc" id="L27">    public static final Function&lt;SearchHit, Document&gt; HIT_TO_DOC = hit -&gt; new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());</span>
+<span class="fc" id="L28">    public static final Function&lt;SearchHit, Document&gt; HIT_TO_DOC = hit -&gt; new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());</span>
 
     private final ElasticSearchClient esClient;
     private final DataBucket bucket;
     private final Scroll scroll;
 
-<span class="fc" id="L33">    public Search(ElasticSearchClient esClient, DataBucket bucket) {</span>
-<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (esClient == null) {</span>
-<span class="fc" id="L35">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
+<span class="fc" id="L34">    public Search(ElasticSearchClient esClient, DataBucket bucket) {</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        if (esClient == null) {</span>
+<span class="fc" id="L36">            throw new IllegalArgumentException(&quot;client argument cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (bucket == null) {</span>
-<span class="fc" id="L38">            throw new IllegalArgumentException(&quot;bucket argument cannot be null&quot;);</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (bucket == null) {</span>
+<span class="fc" id="L39">            throw new IllegalArgumentException(&quot;bucket argument cannot be null&quot;);</span>
         }
-<span class="fc" id="L40">        this.esClient = esClient;</span>
-<span class="fc" id="L41">        this.bucket = bucket;</span>
-<span class="fc" id="L42">        scroll = new Scroll(esClient, bucket);</span>
-<span class="fc" id="L43">    }</span>
+<span class="fc" id="L41">        this.esClient = esClient;</span>
+<span class="fc" id="L42">        this.bucket = bucket;</span>
+<span class="fc" id="L43">        scroll = new Scroll(esClient, bucket);</span>
+<span class="fc" id="L44">    }</span>
 
     public Map&lt;String, Object&gt; getMap(String id) {
-<span class="fc" id="L46">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L47" title="All 2 branches covered.">        return response.isExists()</span>
-<span class="fc" id="L48">                ? response.getSourceAsMap()</span>
+<span class="fc" id="L47">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        return response.isExists()</span>
+<span class="fc" id="L49">                ? response.getSourceAsMap()</span>
                 : null;
     }
 
+    public boolean exists(String id) {
+<span class="fc" id="L54">        return get(id).isExists();</span>
+    }
+
     public String getJson(String id) {
-<span class="fc" id="L53">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L54" title="All 2 branches covered.">        return response.isExists()</span>
-<span class="fc" id="L55">                ? response.getSourceAsString()</span>
+<span class="fc" id="L58">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        return response.isExists()</span>
+<span class="fc" id="L60">                ? response.getSourceAsString()</span>
                 : null;
     }
 
     public &lt;T&gt; T get(String id, Class&lt;T&gt; docClass) {
-<span class="fc" id="L60">        GetResponse response = get(id);</span>
-<span class="fc bfc" id="L61" title="All 2 branches covered.">        return response.isExists()</span>
-<span class="fc" id="L62">                ? esClient.json().toPojo(response.getSourceAsString(), docClass)</span>
+<span class="fc" id="L65">        GetResponse response = get(id);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        return response.isExists()</span>
+<span class="fc" id="L67">                ? esClient.json().toPojo(response.getSourceAsString(), docClass)</span>
                 : null;
     }
 
     public Document getDocument(String id) {
-<span class="fc" id="L67">        GetResponse response = get(id);</span>
-<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        return response.isExists()</span>
-<span class="pc" id="L69">                ? new Document(id, response.getVersion(), response.getSourceAsString())</span>
+<span class="fc" id="L72">        GetResponse response = get(id);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        return response.isExists()</span>
+<span class="pc" id="L74">                ? new Document(id, response.getVersion(), response.getSourceAsString())</span>
                 : null;
     }
 
     private GetResponse get(String id) {
-<span class="fc" id="L74">        GetRequestBuilder getRequest = esClient.getClient()</span>
-<span class="fc" id="L75">                .prepareGet(bucket.getIndex(), bucket.getType(), id);</span>
-<span class="fc" id="L76">        return getRequest.execute().actionGet();</span>
+<span class="fc" id="L79">        GetRequestBuilder getRequest = esClient.getClient()</span>
+<span class="fc" id="L80">                .prepareGet(bucket.getIndex(), bucket.getType(), id);</span>
+<span class="fc" id="L81">        return getRequest.execute().actionGet();</span>
     }
 
     public void search(QueryBuilder query, OutputStream outputStream) {
-<span class="fc" id="L80">        search(searchRequest().setQuery(query), outputStream);</span>
-<span class="fc" id="L81">    }</span>
+<span class="fc" id="L85">        search(searchRequest().setQuery(query), outputStream);</span>
+<span class="fc" id="L86">    }</span>
 
     public void search(SearchRequestBuilder request, OutputStream outputStream) {
-<span class="fc" id="L84">        SearchResponse response = request.execute().actionGet();</span>
-<span class="fc" id="L85">        PrintStream printStream = new PrintStream(outputStream);</span>
-<span class="fc" id="L86">        printStream.print(response.toString());</span>
-<span class="fc" id="L87">        printStream.flush();</span>
-<span class="fc" id="L88">    }</span>
+<span class="fc" id="L89">        SearchResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L90">        PrintStream printStream = new PrintStream(outputStream);</span>
+<span class="fc" id="L91">        printStream.print(response.toString());</span>
+<span class="fc" id="L92">        printStream.flush();</span>
+<span class="fc" id="L93">    }</span>
 
     public long count() {
-<span class="fc" id="L91">        return count(null);</span>
+<span class="fc" id="L96">        return count(null);</span>
     }
 
     public long count(QueryBuilder filter) {
-<span class="fc" id="L95">        SearchRequestBuilder builder = searchRequest().setSize(0);</span>
-<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (filter != null) {</span>
-<span class="fc" id="L97">            builder = builder.setPostFilter(filter);</span>
+<span class="fc" id="L100">        SearchRequestBuilder builder = searchRequest().setSize(0);</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        if (filter != null) {</span>
+<span class="fc" id="L102">            builder = builder.setPostFilter(filter);</span>
         }
-<span class="fc" id="L99">        SearchResponse response = builder.execute().actionGet();</span>
-<span class="fc" id="L100">        return response.getHits().getTotalHits();</span>
+<span class="fc" id="L104">        SearchResponse response = builder.execute().actionGet();</span>
+<span class="fc" id="L105">        return response.getHits().getTotalHits();</span>
     }
 
     public SearchRequestBuilder searchRequest() {
-<span class="fc" id="L104">        return esClient.getClient()</span>
-<span class="fc" id="L105">                .prepareSearch(bucket.getIndex())</span>
-<span class="fc" id="L106">                .setTypes(bucket.getType())</span>
-<span class="fc" id="L107">                .setVersion(true);</span>
+<span class="fc" id="L109">        return esClient.getClient()</span>
+<span class="fc" id="L110">                .prepareSearch(bucket.getIndex())</span>
+<span class="fc" id="L111">                .setTypes(bucket.getType())</span>
+<span class="fc" id="L112">                .setVersion(true);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query) {
-<span class="fc" id="L111">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);</span>
-    }
-
-    public &lt;T&gt; Function&lt;SearchHit, T&gt; hitToPojo(Class&lt;T&gt; pojoClass) {
-<span class="fc" id="L115">        return (hit) -&gt; esClient.json().toPojo(hit.getSourceAsString(), pojoClass);</span>
+<span class="fc" id="L116">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, null);</span>
     }
 
     public Stream&lt;SearchHit&gt; search(QueryBuilder query, int pageSize) {
-<span class="fc" id="L119">        SearchIterator iterator = new SearchIterator(this, query, pageSize);</span>
-<span class="fc" id="L120">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+<span class="fc" id="L120">        return search(query, pageSize, null);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; search(QueryBuilder query, SortBuilder sort) {
+<span class="nc" id="L124">        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, sort);</span>
+    }
+
+    public Stream&lt;SearchHit&gt; search(QueryBuilder query, int pageSize, SortBuilder sort) {
+<span class="fc" id="L128">        SearchIterator iterator = new SearchIterator(this, query, SearchIterator.DEFAULT_PAGE_SIZE, sort);</span>
+<span class="fc" id="L129">        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);</span>
+    }
+
+    public &lt;T&gt; Function&lt;SearchHit, T&gt; hitToPojo(Class&lt;T&gt; pojoClass) {
+<span class="fc" id="L133">        return (hit) -&gt; esClient.json().toPojo(hit.getSourceAsString(), pojoClass);</span>
     }
 
     public SearchResponse search(SearchRequestBuilder request) {
-<span class="nc" id="L124">        return request.execute().actionGet();</span>
+<span class="nc" id="L137">        return request.execute().actionGet();</span>
     }
 
     public DataBucket bucket() {
-<span class="fc" id="L128">        return bucket;</span>
+<span class="fc" id="L141">        return bucket;</span>
     }
 
     public ElasticSearchClient esClient() {
-<span class="nc" id="L132">        return esClient;</span>
+<span class="nc" id="L145">        return esClient;</span>
     }
 
     public Scroll scroll() {
-<span class="fc" id="L136">        return scroll;</span>
+<span class="fc" id="L149">        return scroll;</span>
     }
 
     public Indexer indexer() {
-<span class="nc" id="L140">        return new Indexer(esClient, bucket);</span>
+<span class="nc" id="L153">        return new Indexer(esClient, bucket);</span>
     }
 
     public boolean indexExists() {
-<span class="nc" id="L144">        return esClient.admin().indexExists(bucket.getIndex());</span>
+<span class="nc" id="L157">        return esClient.admin().indexExists(bucket.getIndex());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

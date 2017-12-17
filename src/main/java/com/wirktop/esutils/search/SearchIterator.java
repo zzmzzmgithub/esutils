@@ -4,6 +4,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import java.util.Iterator;
 
@@ -16,15 +17,22 @@ public class SearchIterator implements Iterator<SearchHit> {
 
     private Search search;
     private QueryBuilder query;
+    private int pageSize;
+    private SortBuilder sort;
+
     private SearchResponse currentResponse;
     private int currentIndex;
     private long totalHitCount;
-    private int pageSize;
 
     protected SearchIterator(Search search, QueryBuilder query, int pageSize) {
+        this(search, query, pageSize, null);
+    }
+
+    protected SearchIterator(Search search, QueryBuilder query, int pageSize, SortBuilder sort) {
         this.search = search;
         this.query = query;
         this.pageSize = pageSize;
+        this.sort = sort;
 
         currentIndex = 0;
         doRequest();
@@ -53,6 +61,9 @@ public class SearchIterator implements Iterator<SearchHit> {
         request.setQuery(query);
         request.setFrom(currentIndex);
         request.setSize(pageSize);
+        if (sort != null) {
+            request.addSort(sort);
+        }
         currentResponse = request.execute().actionGet();
     }
 

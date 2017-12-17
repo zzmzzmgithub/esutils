@@ -10,6 +10,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -47,6 +48,10 @@ public class Search {
         return response.isExists()
                 ? response.getSourceAsMap()
                 : null;
+    }
+
+    public boolean exists(String id) {
+        return get(id).isExists();
     }
 
     public String getJson(String id) {
@@ -108,16 +113,24 @@ public class Search {
     }
 
     public Stream<SearchHit> search(QueryBuilder query) {
-        return search(query, SearchIterator.DEFAULT_PAGE_SIZE);
+        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, null);
+    }
+
+    public Stream<SearchHit> search(QueryBuilder query, int pageSize) {
+        return search(query, pageSize, null);
+    }
+
+    public Stream<SearchHit> search(QueryBuilder query, SortBuilder sort) {
+        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, sort);
+    }
+
+    public Stream<SearchHit> search(QueryBuilder query, int pageSize, SortBuilder sort) {
+        SearchIterator iterator = new SearchIterator(this, query, SearchIterator.DEFAULT_PAGE_SIZE, sort);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
     public <T> Function<SearchHit, T> hitToPojo(Class<T> pojoClass) {
         return (hit) -> esClient.json().toPojo(hit.getSourceAsString(), pojoClass);
-    }
-
-    public Stream<SearchHit> search(QueryBuilder query, int pageSize) {
-        SearchIterator iterator = new SearchIterator(this, query, pageSize);
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
     public SearchResponse search(SearchRequestBuilder request) {

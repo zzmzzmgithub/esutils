@@ -67,6 +67,16 @@ public class SearchTest extends TestBase {
     }
 
     @Test
+    public void testExists() throws Exception {
+        Indexer indexer = indexer("test-exists", "type1");
+        Search search = search("test-exists", "type1");
+        String document = randomDoc();
+        String id = indexer.indexJson(document);
+        Assert.assertTrue(search.exists(id));
+        Assert.assertFalse(search.exists(id + "x"));
+    }
+
+    @Test
     public void testGetPojo() throws Exception {
         Indexer indexer = indexer("test-get-pojo", "type1");
         Search search = search("test-get-pojo", "type1");
