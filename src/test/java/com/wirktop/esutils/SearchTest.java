@@ -97,8 +97,7 @@ public class SearchTest extends TestBase {
         assertSame(new JSONObject(pojoToString(document)), new JSONObject(responseDoc.getSource()));
         Assert.assertTrue(responseDoc.getVersion() > 0);
     }
-
-
+    
     @Test
     public void testSearchPojo() throws Exception {
         String index = "test-search-pojo";
