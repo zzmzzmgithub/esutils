@@ -131,16 +131,15 @@ public class AdminTest extends TestBase {
         esClient().admin().createTemplate("index", getClass().getResourceAsStream("/templates/template-index.json"));
         String index = "testcreatealiaswithfilter";
         admin.createIndex(index);
-        DataBucket bucket = new DataBucket(index, "type");
-        Search search = client.search(bucket);
+        DataBucket bucket = new DataBucket(index, "person");
         Indexer indexer = client.indexer(bucket);
         indexStructuredDocs(100, indexer);
         waitForIndexedDocs(index, 100);
         admin.createAlias("males-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "male"), index);
         admin.createAlias("females-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "female"), index);
 
-        long males = client.search(new DataBucket("males-testcreatealiaswithfilter", "type")).count();
-        long females = client.search(new DataBucket("females-testcreatealiaswithfilter", "type")).count();
+        long males = client.search(new DataBucket("males-testcreatealiaswithfilter", "person")).count();
+        long females = client.search(new DataBucket("females-testcreatealiaswithfilter", "person")).count();
         Assert.assertTrue(males > 0);
         Assert.assertTrue(females > 0);
         Assert.assertEquals(100, females + males);
@@ -154,9 +153,12 @@ public class AdminTest extends TestBase {
         String index = "indexnamealiasnameremovealias";
         admin.createIndex(index);
         admin.createAlias(alias, index);
-        Assert.assertEquals(1, admin.indexesForAlias(alias).size());
+        List<String> indices = admin.indicesForAlias(alias);
+        Assert.assertEquals(1, indices.size());
+        Assert.assertEquals(index, indices.get(0));
         admin.removeAlias(alias);
-        Assert.assertEquals(0, admin.indexesForAlias(alias).size());
+        Thread.sleep(1000);
+        Assert.assertEquals(0, admin.indicesForAlias(alias).size());
     }
 
     @Test

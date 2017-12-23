@@ -11,4 +11,4 @@ ElasticSearch Java Utilities,com.wirktop.esutils,DataBucket,0,40,0,4,0,14,0,7,0,
 ElasticSearch Java Utilities,com.wirktop.esutils,ElasticSearchClient,6,160,0,8,1,34,1,14,1,10
 ElasticSearch Java Utilities,com.wirktop.esutils,SearchException,4,5,0,0,2,2,1,1,1,1
 ElasticSearch Java Utilities,com.wirktop.esutils,Json,0,55,0,0,0,14,0,4,0,4
-ElasticSearch Java Utilities,com.wirktop.esutils,Admin,57,420,6,20,7,142,6,26,0,19
+ElasticSearch Java Utilities,com.wirktop.esutils,Admin,57,441,8,24,7,148,8,28,0,20

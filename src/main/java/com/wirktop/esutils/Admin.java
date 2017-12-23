@@ -34,8 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -173,14 +171,21 @@ public class Admin {
         }
     }
 
-    public Collection<String> indexesForAlias(String alias) {
+    public List<String> indicesForAlias(String alias) {
         GetAliasesRequest r = new GetAliasesRequest(alias);
         GetAliasesResponse response = esClient.getClient()
                 .admin()
                 .indices()
                 .getAliases(r)
                 .actionGet();
-        return Arrays.asList(response.getAliases().keys().toArray(String.class));
+        List<String> indices = new ArrayList<>();
+        response.getAliases()
+                .forEach(cursor -> {
+                    if (cursor.key != null && cursor.value != null && cursor.value.size() > 0) {
+                        indices.add(cursor.key);
+                    }
+                });
+        return indices;
     }
 
     public boolean indexExists(String index) {

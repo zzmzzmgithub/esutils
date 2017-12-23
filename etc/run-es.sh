@@ -2,7 +2,7 @@
 
 etc/kill-es.sh
 
-ES_VERSION=5.6.2
+ES_VERSION=6.1.0
 ES_CLUSTER=wirktop-esutils-test
 TMPDIR=etc/tmp
 ES_DIR=etc/tmp/elasticsearch

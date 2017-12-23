@@ -18,16 +18,16 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testAliasWrapped() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrapped";
-        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "mytype");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "person");
         Admin admin = client.admin();
         bucket.createIndex(admin);
         String index1 = bucket.actualIndex(admin);
         Assert.assertTrue(admin.indexExists(index1));
         Assert.assertTrue(admin.aliasExists(indexBaseName));
         Assert.assertFalse(admin.indexExists(indexBaseName));
-        Collection<String> indexesForAlias = admin.indexesForAlias(indexBaseName);
-        Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), index1);
+        Collection<String> indicesForAlias = admin.indicesForAlias(indexBaseName);
+        Assert.assertEquals(indicesForAlias.size(), 1);
+        Assert.assertEquals(indicesForAlias.iterator().next(), index1);
 
         Search search = client.search(bucket);
         Indexer indexer = client.indexer(bucket);
@@ -44,9 +44,9 @@ public class AliasWrappedBucketTest extends TestBase {
         Assert.assertTrue(admin.aliasExists(indexBaseName));
         Assert.assertFalse(admin.indexExists(indexBaseName));
 
-        indexesForAlias = admin.indexesForAlias(indexBaseName);
-        Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex(admin));
+        indicesForAlias = admin.indicesForAlias(indexBaseName);
+        Assert.assertEquals(indicesForAlias.size(), 1);
+        Assert.assertEquals(indicesForAlias.iterator().next(), bucket.actualIndex(admin));
         Assert.assertNull(search.getMap(newId));
     }
 
@@ -54,7 +54,7 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testRefresh() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrappedrefresh";
-        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "mytype");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "person");
         Admin admin = client.admin();
         bucket.createIndex(admin);
 
@@ -73,16 +73,16 @@ public class AliasWrappedBucketTest extends TestBase {
         String indexBaseName = "aliaswrappedcustom";
         String prefixyz = "prefixyz";
         String fullPrefix = prefixyz + "---";
-        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), new AliasWrappedBucket(indexBaseName, "mytype"), prefixyz);
+        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), new AliasWrappedBucket(indexBaseName, "person"), prefixyz);
         Admin admin = client.admin();
         bucket.createIndex(admin);
         String index1 = bucket.actualIndex(admin);
         Assert.assertTrue(admin.indexExists(index1));
         Assert.assertTrue(admin.aliasExists(fullPrefix + indexBaseName));
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
-        Collection<String> indexesForAlias = admin.indexesForAlias(fullPrefix + indexBaseName);
-        Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), index1);
+        Collection<String> indicesForAlias = admin.indicesForAlias(fullPrefix + indexBaseName);
+        Assert.assertEquals(indicesForAlias.size(), 1);
+        Assert.assertEquals(indicesForAlias.iterator().next(), index1);
 
         Search search = client.search(bucket);
         Indexer indexer = client.indexer(bucket);
@@ -99,15 +99,15 @@ public class AliasWrappedBucketTest extends TestBase {
         Assert.assertTrue(admin.aliasExists(fullPrefix + indexBaseName));
         Assert.assertFalse(admin.indexExists(fullPrefix + indexBaseName));
 
-        indexesForAlias = admin.indexesForAlias(fullPrefix + indexBaseName);
-        Assert.assertEquals(indexesForAlias.size(), 1);
-        Assert.assertEquals(indexesForAlias.iterator().next(), bucket.actualIndex(admin));
+        indicesForAlias = admin.indicesForAlias(fullPrefix + indexBaseName);
+        Assert.assertEquals(indicesForAlias.size(), 1);
+        Assert.assertEquals(indicesForAlias.iterator().next(), bucket.actualIndex(admin));
         Assert.assertNull(search.getMap(newId));
     }
 
     @Test
     public void testDataMove() throws Exception {
-        AliasWrappedBucket bucket = new AliasWrappedBucket("test-alias-move-to-new-wrapped-index", "notyourtype");
+        AliasWrappedBucket bucket = new AliasWrappedBucket("test-alias-move-to-new-wrapped-index", "person");
         Admin admin = esClient().admin();
         bucket.createIndex(admin);
         String index = bucket.actualIndex(admin);

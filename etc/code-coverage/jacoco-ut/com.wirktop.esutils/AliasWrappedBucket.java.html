@@ -76,7 +76,7 @@ public class AliasWrappedBucket extends DataBucket {
     }
 
     public String actualIndex(Admin admin) {
-<span class="fc" id="L79">        Collection&lt;String&gt; indices = admin.indexesForAlias(getIndex());</span>
+<span class="fc" id="L79">        Collection&lt;String&gt; indices = admin.indicesForAlias(getIndex());</span>
 <span class="fc" id="L80">        Pattern pattern = Pattern.compile(getIndex() + &quot;\\..{32}&quot;);</span>
 <span class="fc bfc" id="L81" title="All 2 branches covered.">        for (String index : indices) {</span>
 <span class="pc bpc" id="L82" title="1 of 2 branches missed.">            if (pattern.matcher(index).matches()) {</span>

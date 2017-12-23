@@ -6,7 +6,7 @@
 
     <groupId>com.wirktop</groupId>
     <artifactId>esutils</artifactId>
-    <version>0.9.5</version>
+    <version>0.9.7</version>
     <packaging>jar</packaging>
 
     <name>ElasticSearch Java Utilities</name>
@@ -55,12 +55,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>transport</artifactId>

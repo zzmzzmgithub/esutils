@@ -1,7 +1,5 @@
 {
     "mytemplate2": {
-        "order": 0,
-        "template": "*capital*",
         "settings": {},
         "mappings": {
             "auditevent": {
@@ -18,6 +16,10 @@
                 }
             }
         },
-        "aliases": {}
+        "aliases": {},
+        "index_patterns": [
+            "*capital*"
+        ],
+        "order": 0
     }
 }

@@ -76,7 +76,7 @@ public class AliasWrappedBucket extends DataBucket {
     }
 
     public String actualIndex(Admin admin) {
-        Collection<String> indices = admin.indexesForAlias(getIndex());
+        Collection<String> indices = admin.indicesForAlias(getIndex());
         Pattern pattern = Pattern.compile(getIndex() + "\\..{32}");
         for (String index : indices) {
             if (pattern.matcher(index).matches()) {

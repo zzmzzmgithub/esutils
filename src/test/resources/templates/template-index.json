@@ -1,7 +1,7 @@
 {
     "template": "*",
     "mappings": {
-        "_default_": {
+        "person": {
             "properties": {
                 "name": {
                     "type": "text"
