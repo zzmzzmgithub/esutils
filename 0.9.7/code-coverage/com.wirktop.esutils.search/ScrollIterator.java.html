@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScrollIterator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils.search</a> &gt; <span class="el_source">ScrollIterator.java</span></div><h1>ScrollIterator.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils.search;
+
+import com.wirktop.esutils.ElasticSearchClient;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
+
+import java.util.Iterator;
+
+/**
+ * @author Cosmin Marginean
+ */
+public class ScrollIterator implements Iterator&lt;SearchHit&gt; {
+
+<span class="fc" id="L17">    protected static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(30);</span>
+    protected static final int DEFAULT_PAGE_SIZE = 200;
+
+    private ElasticSearchClient esClient;
+    private String scrollId;
+    private SearchResponse currentResponse;
+    private long currentIndex;
+    private long totalHitCount;
+    private int pageSize;
+
+<span class="fc" id="L27">    public ScrollIterator(ElasticSearchClient esClient, SearchRequestBuilder request, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {</span>
+<span class="fc" id="L28">        this.esClient = esClient;</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        this.pageSize = pageSize &gt; 0 ? pageSize : DEFAULT_PAGE_SIZE;</span>
+
+<span class="fc" id="L31">        request.setScroll(keepAlive)</span>
+<span class="fc" id="L32">                .setSize(pageSize)</span>
+<span class="fc" id="L33">                .setFetchSource(fetchSource);</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (query != null) {</span>
+<span class="fc" id="L35">            request.setQuery(query);</span>
+        }
+<span class="fc" id="L37">        SearchResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L38">        totalHitCount = response.getHits().getTotalHits();</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (totalHitCount &gt; 0) {</span>
+<span class="fc" id="L40">            currentIndex = 0;</span>
+<span class="fc" id="L41">            scrollId = response.getScrollId();</span>
+<span class="fc" id="L42">            currentResponse = response;</span>
+        }
+<span class="fc" id="L44">    }</span>
+
+    @Override
+    public boolean hasNext() {
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        return currentIndex &lt; totalHitCount;</span>
+    }
+
+    @Override
+    public SearchHit next() {
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (!hasNext()) {</span>
+<span class="nc" id="L54">            throw new IllegalStateException(&quot;No next element&quot;);</span>
+        }
+<span class="fc" id="L56">        long arrayIndex = currentIndex % pageSize;</span>
+<span class="fc" id="L57">        SearchHit hit = currentResponse.getHits().getHits()[(int) arrayIndex];</span>
+<span class="fc" id="L58">        currentIndex++;</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (currentIndex % pageSize == 0) {</span>
+<span class="fc" id="L60">            currentResponse = esClient.getClient().prepareSearchScroll(scrollId)</span>
+<span class="fc" id="L61">                    .setScroll(DEFAULT_KEEPALIVE)</span>
+<span class="fc" id="L62">                    .execute()</span>
+<span class="fc" id="L63">                    .actionGet();</span>
+        }
+<span class="fc" id="L65">        return hit;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
