@@ -2,7 +2,7 @@
 
 ## About
 **esutils** is a Java library that aims to make interaction with ElasticSearch a bit more fluent.
-* Javadocs: https://wirktop.github.io/esutils/etc/apidocs/index.html 
+* Javadocs: https://wirktop.github.io/esutils/0.9.7/index.html
 * Code coverage: https://wirktop.github.io/esutils/etc/code-coverage/jacoco-ut/index.html
 * License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
 * Unit tests download and run an ElasticSearch instance locally (embedded is not supported anymore so
@@ -35,13 +35,13 @@ try (IndexBatch batch = indexer.batch()) {
 ```
 
 ## High level concepts
-The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component
-which produces sub-components like [`Search`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html),
-[`Scroll`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Scroll.html),
-[`Indexer`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html) or
-[`Admin`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html).
+The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/ElasticSearchClient.html) component
+which produces sub-components like [`Search`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/search/Search.html),
+[`Scroll`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/search/Scroll.html),
+[`Indexer`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/index/Indexer.html) or
+[`Admin`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/Admin.html).
 
-`Search` and `Indexer` instances are bound to a [`DataBucket`](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
+`Search` and `Indexer` instances are bound to a [`DataBucket`](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
 an (index,type) tuple.
 
 `DataBucket` can be extended for custom behaviours like prefixing/suffixing index or type names, etc. It is the easiest way to achieve dynamic names for the
@@ -58,7 +58,7 @@ ElasticSearchClient esClient2 = new ElasticSearchClient(Arrays.asList("localhost
 ```
 
 ## Indexing
-https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/index/Indexer.html
+https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/index/Indexer.html
 #### Index documents
 ```
 SomePojo object = ...
@@ -71,7 +71,7 @@ indexer.indexJson(jsonDocAsString);
 You can optionally pass an `id` to specify the id to index with, and a `boolean` to wait for refresh (defaults to `false`).
 The `index()` methods always return the `_id` of the newly indexed document.
 
-Certain index methods accept a [Document](https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Document.html) instance which is a simple container 
+Certain index methods accept a [Document](https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/Document.html) instance which is a simple container 
 for both an ID and the content of the document. For bulk indexing this is particularly important, where passing an ID for each document might be required.
 
 #### Bulk index documents
@@ -92,8 +92,8 @@ try (IndexBatch batch = indexer.batch(100)) {
 ```
 
 ## Searching and Scrolling
-https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Search.html
-https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/search/Scroll.html
+https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/search/Search.html
+https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/search/Scroll.html
 
 A series of search methods return a `Stream` that can be used to transparently process the complete result set, without having to worry about paging.
 ```
@@ -112,7 +112,7 @@ TestPojo pojo = search.get(id, TestPojo.class);
 ```
 
 ## Admin
-https://wirktop.github.io/esutils/etc/apidocs/com/wirktop/esutils/Admin.html
+https://wirktop.github.io/esutils/0.9.7/com/wirktop/esutils/Admin.html
 ```
 ElasticSearchClient client = new ElasticSearchClient(...);
 Admin admin = client.admin();
