@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-#mvn clean test javadoc:javadoc
+mvn clean test javadoc:javadoc
 version=`cat pom.xml | grep -m 1 '<version>' | sed 's/.*<version>//; s/<\/version>.*//'`
 
 rm -rf temp
