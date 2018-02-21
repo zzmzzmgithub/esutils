@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
  */
 public class AliasWrappedBucket extends DataBucket {
 
-    public AliasWrappedBucket(String index, String type) {
-        super(index, type);
+    public AliasWrappedBucket(String index) {
+        super(index);
     }
 
     private static String uuid() {
@@ -61,7 +61,7 @@ public class AliasWrappedBucket extends DataBucket {
 
     public DataBucket createNewIndex(Admin admin, int shards) {
         String index = newIndexName();
-        DataBucket dataBucket = new DataBucket(index, getType());
+        DataBucket dataBucket = new DataBucket(index);
         admin.createIndex(index, shards);
         return dataBucket;
     }

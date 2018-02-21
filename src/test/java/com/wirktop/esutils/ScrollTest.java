@@ -20,8 +20,8 @@ public class ScrollTest extends TestBase {
     @Test
     public void testScrollHits() throws Exception {
         String index = "test-scroll-hits";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 267;
         try (IndexBatch batch = indexer.batch()) {
             generateDocuments(docCount, false)
@@ -36,8 +36,8 @@ public class ScrollTest extends TestBase {
     @Test
     public void testScrollPojo() throws Exception {
         String index = "test-scroll-pojo";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 194;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
@@ -50,8 +50,8 @@ public class ScrollTest extends TestBase {
     @Test
     public void testScrollDocs() throws Exception {
         String index = "test-scroll-docs";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 194;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);

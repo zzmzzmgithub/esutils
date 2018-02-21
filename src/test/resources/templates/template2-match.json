@@ -2,7 +2,7 @@
     "mytemplate2": {
         "settings": {},
         "mappings": {
-            "auditevent": {
+            "defaulttype": {
                 "dynamic": false,
                 "date_detection": false,
                 "properties": {

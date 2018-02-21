@@ -1,7 +1,7 @@
 {
-    "template": "*",
+    "index_patterns": "*",
     "mappings": {
-        "person": {
+        "defaulttype": {
             "properties": {
                 "name": {
                     "type": "text"

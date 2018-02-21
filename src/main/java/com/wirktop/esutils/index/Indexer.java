@@ -22,6 +22,7 @@ import java.util.Map;
 public class Indexer {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
+    public static final String DEFAULTTYPE = "defaulttype";
 
     private final ElasticSearchClient esClient;
     private final DataBucket bucket;
@@ -101,7 +102,7 @@ public class Indexer {
     }
 
     public UpdateRequest updateRequest(String id) {
-        return new UpdateRequest(bucket.getIndex(), bucket.getType(), id);
+        return new UpdateRequest(bucket.getIndex(), DEFAULTTYPE, id);
     }
 
     public void update(UpdateRequest request) {
@@ -113,7 +114,7 @@ public class Indexer {
     }
 
     public void delete(String id, boolean refresh) {
-        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), bucket.getType(), id);
+        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), DEFAULTTYPE, id);
         if (refresh) {
             request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
         }
@@ -185,7 +186,7 @@ public class Indexer {
     }
 
     private IndexRequestBuilder prepareIndex() {
-        return esClient.getClient().prepareIndex(bucket.getIndex(), bucket.getType());
+        return esClient.getClient().prepareIndex(bucket.getIndex(), DEFAULTTYPE);
     }
 
     private Json json() {

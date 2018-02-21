@@ -32,13 +32,7 @@ public class SearchTest extends TestBase {
     @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
         new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(new DataBucket(null, "aaa"));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNoType() throws Exception {
-        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
-                .search(new DataBucket("aaa", null));
+                .search(new DataBucket(null));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -48,8 +42,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testGetMap() throws Exception {
-        Indexer indexer = indexer("test-get-map", "person");
-        Search search = search("test-get-map", "person");
+        Indexer indexer = indexer("test-get-map");
+        Search search = search("test-get-map");
         String document = randomDoc();
         String id = indexer.indexJson(document);
         Map<String, Object> map = search.getMap(id);
@@ -58,8 +52,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testGetStr() throws Exception {
-        Indexer indexer = indexer("test-get-str", "person");
-        Search search = search("test-get-str", "person");
+        Indexer indexer = indexer("test-get-str");
+        Search search = search("test-get-str");
         String document = randomDoc();
         String id = indexer.indexJson(document);
         String jsonDoc = search.getJson(id);
@@ -68,8 +62,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testExists() throws Exception {
-        Indexer indexer = indexer("test-exists", "person");
-        Search search = search("test-exists", "person");
+        Indexer indexer = indexer("test-exists");
+        Search search = search("test-exists");
         String document = randomDoc();
         String id = indexer.indexJson(document);
         Assert.assertTrue(search.exists(id));
@@ -78,8 +72,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testGetPojo() throws Exception {
-        Indexer indexer = indexer("test-get-pojo", "person");
-        Search search = search("test-get-pojo", "person");
+        Indexer indexer = indexer("test-get-pojo");
+        Search search = search("test-get-pojo");
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
         String id = indexer.indexObject(document);
         assertSamePojo1(search, document, id);
@@ -88,8 +82,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testGetDocument() throws Exception {
-        Indexer indexer = indexer("test-get-document", "person");
-        Search search = search("test-get-document", "person");
+        Indexer indexer = indexer("test-get-document");
+        Search search = search("test-get-document");
         TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
         String id = indexer.indexObject(document);
         assertSamePojo1(search, document, id);
@@ -101,8 +95,8 @@ public class SearchTest extends TestBase {
     @Test
     public void testSearchPojo() throws Exception {
         String index = "test-search-pojo";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 243;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
@@ -115,8 +109,8 @@ public class SearchTest extends TestBase {
     @Test
     public void testSearchDocs() throws Exception {
         String index = "test-search-docs";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 243;
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, docCount);
@@ -132,8 +126,8 @@ public class SearchTest extends TestBase {
     @Test
     public void testSearchHits() throws Exception {
         String index = "test-search-hits";
-        Search search = search(index, "person");
-        Indexer indexer = indexer(index, "person");
+        Search search = search(index);
+        Indexer indexer = indexer(index);
         int docCount = 119;
         try (IndexBatch batch = indexer.batch()) {
             generateDocuments(docCount, false)
@@ -148,8 +142,8 @@ public class SearchTest extends TestBase {
     @Test
     public void testSearchHitsDefaultPageSize() throws Exception {
         String index = "test-search-hits-default-page-size";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         int docCount = 361;
         try (IndexBatch batch = indexer.batch()) {
             generateDocuments(docCount, false)
@@ -163,8 +157,8 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testMissingDoc() throws Exception {
-        Indexer indexer = indexer("test-missing-doc", "person");
-        Search search = search("test-missing-doc", "person");
+        Indexer indexer = indexer("test-missing-doc");
+        Search search = search("test-missing-doc");
         String id = indexer.indexJson(randomDoc());
         Assert.assertNull(search.get("askjdkjbadfasdf", TestPojo.class));
         Assert.assertNull(search.getJson("askjdkjbadfas12312093df"));
@@ -176,8 +170,8 @@ public class SearchTest extends TestBase {
     public void testCount() throws Exception {
         int docCount = 100;
         String index = "test-count";
-        Indexer indexer = indexer(index, "person");
-        Search search = search(index, "person");
+        Indexer indexer = indexer(index);
+        Search search = search(index);
         esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, 100);
@@ -190,8 +184,8 @@ public class SearchTest extends TestBase {
     public void testStream() throws Exception {
         int docCount = 100;
         String index = "test-stream";
-        Search search = search(index, "person");
-        Indexer indexer = indexer(index, "person");
+        Search search = search(index);
+        Indexer indexer = indexer(index);
         esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, 100);
@@ -212,8 +206,8 @@ public class SearchTest extends TestBase {
     public void testStreamPojo() throws Exception {
         int docCount = 100;
         String index = "test-streampojo";
-        Search search = search(index, "person");
-        Indexer indexer = indexer(index, "person");
+        Search search = search(index);
+        Indexer indexer = indexer(index);
         esClient().admin().createTemplate("aaa", getClass().getResourceAsStream("/templates/template-index.json"));
         indexStructuredDocs(docCount, indexer);
         waitForIndexedDocs(index, 100);
@@ -228,18 +222,18 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testCustomBucket() throws Exception {
-        CustomBucket bucket = new CustomBucket("private-custom-index", "person", "custom1");
+        CustomBucket bucket = new CustomBucket("private-custom-index", "custom1");
         Indexer indexer = esClient().indexer(bucket);
         String document = randomDoc();
         String id = indexer.indexJson(document);
-        Map<String, Object> indexedDoc = getMap("custom1---private-custom-index", "person", id);
+        Map<String, Object> indexedDoc = getMap("custom1---private-custom-index", id);
         Assert.assertNotNull(indexedDoc);
         assertSame(new JSONObject(document), indexedDoc);
     }
 
     @Test(expected = SearchException.class)
     public void testFailDeserialize() throws Exception {
-        DataBucket bucket = new DataBucket("test-fail-deserialize", "person");
+        DataBucket bucket = new DataBucket("test-fail-deserialize");
         Search search = esClient().search(bucket);
         Indexer indexer = esClient().indexer(bucket);
         indexer.indexJson("a", randomDoc());
@@ -259,22 +253,22 @@ public class SearchTest extends TestBase {
                 .collect(Collectors.toList());
 
         String index = "test-scroll-full-index";
-        client.indexer(new DataBucket(index, "person"))
+        client.indexer(new DataBucket(index))
                 .bulkIndex(docs1);
         waitForIndexedDocs(index, 100);
 
-        client.indexer(new DataBucket(index, "person"))
+        client.indexer(new DataBucket(index))
                 .bulkIndex(docs2);
         waitForIndexedDocs(index, 200);
 
         long count = Scroll.scrollIndex(esClient(), index).count();
         Assert.assertEquals(200, count);
-        Assert.assertEquals(200, client.search(new DataBucket(index, "person")).count());
+        Assert.assertEquals(200, client.search(new DataBucket(index)).count());
     }
 
     @Test
     public void testCustomObjectMapper() throws Exception {
-        DataBucket bucket = new DataBucket("test-custom-object-mapper", "person");
+        DataBucket bucket = new DataBucket("test-custom-object-mapper");
         Search search = esClient().search(bucket);
         Indexer indexer = esClient().indexer(bucket);
         PojoSerialize pojo = new PojoSerialize();
@@ -290,7 +284,7 @@ public class SearchTest extends TestBase {
         module.addDeserializer(Instant.class, new InstantDeserializer());
         objectMapper.registerModule(module);
 
-        DataBucket bucket2 = new DataBucket("test-custom-object-mapper2", "person");
+        DataBucket bucket2 = new DataBucket("test-custom-object-mapper2");
         Search search2 = esClient().search(bucket2);
         esClient().setObjectMapper(objectMapper);
         String newId = esClient().indexer(bucket2).indexObject(pojo);
@@ -316,8 +310,8 @@ public class SearchTest extends TestBase {
 
         private String prefix;
 
-        public CustomBucket(String index, String type, String prefix) {
-            super(index, type);
+        public CustomBucket(String index, String prefix) {
+            super(index);
             this.prefix = prefix;
         }
 

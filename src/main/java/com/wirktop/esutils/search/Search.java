@@ -77,7 +77,7 @@ public class Search {
 
     private GetResponse get(String id) {
         GetRequestBuilder getRequest = esClient.getClient()
-                .prepareGet(bucket.getIndex(), bucket.getType(), id);
+                .prepareGet(bucket.getIndex(), Indexer.DEFAULTTYPE, id);
         return getRequest.execute().actionGet();
     }
 
@@ -108,7 +108,7 @@ public class Search {
     public SearchRequestBuilder searchRequest() {
         return esClient.getClient()
                 .prepareSearch(bucket.getIndex())
-                .setTypes(bucket.getType())
+                .setTypes(Indexer.DEFAULTTYPE)
                 .setVersion(true);
     }
 

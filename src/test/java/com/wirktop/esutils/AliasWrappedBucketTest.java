@@ -18,7 +18,7 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testAliasWrapped() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrapped";
-        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "person");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName);
         Admin admin = client.admin();
         bucket.createIndex(admin);
         String index1 = bucket.actualIndex(admin);
@@ -54,7 +54,7 @@ public class AliasWrappedBucketTest extends TestBase {
     public void testRefresh() throws Exception {
         ElasticSearchClient client = esClient();
         String indexBaseName = "aliaswrappedrefresh";
-        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName, "person");
+        AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName);
         Admin admin = client.admin();
         bucket.createIndex(admin);
 
@@ -73,7 +73,7 @@ public class AliasWrappedBucketTest extends TestBase {
         String indexBaseName = "aliaswrappedcustom";
         String prefixyz = "prefixyz";
         String fullPrefix = prefixyz + "---";
-        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), new AliasWrappedBucket(indexBaseName, "person"), prefixyz);
+        AliasWrappedBucket bucket = new CustomBucket(esClient().admin(), new AliasWrappedBucket(indexBaseName), prefixyz);
         Admin admin = client.admin();
         bucket.createIndex(admin);
         String index1 = bucket.actualIndex(admin);
@@ -107,7 +107,7 @@ public class AliasWrappedBucketTest extends TestBase {
 
     @Test
     public void testDataMove() throws Exception {
-        AliasWrappedBucket bucket = new AliasWrappedBucket("test-alias-move-to-new-wrapped-index", "person");
+        AliasWrappedBucket bucket = new AliasWrappedBucket("test-alias-move-to-new-wrapped-index");
         Admin admin = esClient().admin();
         bucket.createIndex(admin);
         String index = bucket.actualIndex(admin);
@@ -134,12 +134,12 @@ public class AliasWrappedBucketTest extends TestBase {
         private String prefix;
 
         protected CustomBucket(Admin admin, AliasWrappedBucket bucket, String prefix) {
-            super(bucket.getIndex(), bucket.getType());
+            super(bucket.getIndex());
             this.prefix = prefix;
         }
 
-        protected CustomBucket(Admin admin, String index, String type, String prefix) {
-            super(index, type);
+        protected CustomBucket(Admin admin, String index, String prefix) {
+            super(index);
             this.prefix = prefix;
         }
 

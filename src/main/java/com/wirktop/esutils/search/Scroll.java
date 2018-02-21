@@ -51,7 +51,6 @@ public class Scroll {
     public SearchRequestBuilder searchRequest() {
         return esClient.getClient()
                 .prepareSearch(bucket.getIndex())
-                .setTypes(bucket.getType())
                 .setVersion(true);
     }
 }

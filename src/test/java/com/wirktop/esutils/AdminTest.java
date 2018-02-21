@@ -22,17 +22,14 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateBuckets() throws Exception {
-        DataBucket bucket = new DataBucket("index", "type");
+        DataBucket bucket = new DataBucket("index");
         Assert.assertEquals("index", bucket.getIndex());
-        Assert.assertEquals("type", bucket.getType());
 
-        AliasWrappedBucket aliasWrappedBucket = new AliasWrappedBucket("wrappedindex", "wrappedtype");
+        AliasWrappedBucket aliasWrappedBucket = new AliasWrappedBucket("wrappedindex");
         Assert.assertEquals("wrappedindex", aliasWrappedBucket.getIndex());
-        Assert.assertEquals("wrappedtype", aliasWrappedBucket.getType());
 
-        MyBucket myBucket = new MyBucket("customindex", "customtype");
+        MyBucket myBucket = new MyBucket("customindex");
         Assert.assertEquals("customindex", myBucket.getIndex());
-        Assert.assertEquals("customtype", myBucket.getType());
     }
 
     @Test
@@ -78,7 +75,7 @@ public class AdminTest extends TestBase {
         Admin admin = client.admin();
         String index = "createindextest-bucket";
         Assert.assertFalse(admin.indexExists(index));
-        new DataBucket(index, "notype").createIndex(admin, 7);
+        new DataBucket(index).createIndex(admin, 7);
         Assert.assertTrue(admin.indexExists(index));
 
         JSONObject json = new JSONObject(httpClient().target("http://localhost:9200/" + index).request().get().readEntity(String.class));
@@ -131,15 +128,15 @@ public class AdminTest extends TestBase {
         esClient().admin().createTemplate("index", getClass().getResourceAsStream("/templates/template-index.json"));
         String index = "testcreatealiaswithfilter";
         admin.createIndex(index);
-        DataBucket bucket = new DataBucket(index, "person");
+        DataBucket bucket = new DataBucket(index);
         Indexer indexer = client.indexer(bucket);
         indexStructuredDocs(100, indexer);
         waitForIndexedDocs(index, 100);
         admin.createAlias("males-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "male"), index);
         admin.createAlias("females-testcreatealiaswithfilter", QueryBuilders.termQuery("gender", "female"), index);
 
-        long males = client.search(new DataBucket("males-testcreatealiaswithfilter", "person")).count();
-        long females = client.search(new DataBucket("females-testcreatealiaswithfilter", "person")).count();
+        long males = client.search(new DataBucket("males-testcreatealiaswithfilter")).count();
+        long females = client.search(new DataBucket("females-testcreatealiaswithfilter")).count();
         Assert.assertTrue(males > 0);
         Assert.assertTrue(females > 0);
         Assert.assertEquals(100, females + males);
@@ -183,7 +180,7 @@ public class AdminTest extends TestBase {
 
         String index = "index-test-copy";
 
-        DataBucket bucket = new DataBucket(index, "type1");
+        DataBucket bucket = new DataBucket(index);
         Search search = client.search(bucket);
         Indexer indexer = client.indexer(bucket);
         indexer.bulkIndex(docs1);
@@ -194,14 +191,13 @@ public class AdminTest extends TestBase {
         admin.copyData(search.bucket().getIndex(), cloneIndex);
         waitForIndexedDocs(cloneIndex, count);
         Assert.assertEquals(count, client.search(bucket).count());
-        Assert.assertEquals(0, client.search(new DataBucket(index, "typex")).count());
-        Assert.assertEquals(0, client.search(new DataBucket(index, "21370123123")).count());
+        Assert.assertEquals(319, client.search(new DataBucket(cloneIndex)).count());
     }
 
     public static final class MyBucket extends DataBucket {
 
-        public MyBucket(String index, String type) {
-            super(index, type);
+        public MyBucket(String index) {
+            super(index);
         }
     }
 }

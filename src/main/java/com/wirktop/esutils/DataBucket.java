@@ -6,18 +6,12 @@ package com.wirktop.esutils;
 public class DataBucket {
 
     private String index;
-    private String type;
 
-    public DataBucket(String index, String type) {
+    public DataBucket(String index) {
         if (index == null) {
             throw new IllegalArgumentException("index argument cannot be null");
         }
-        if (type == null) {
-            throw new IllegalArgumentException("type argument cannot be null");
-        }
-
         this.index = index;
-        this.type = type;
     }
 
     public void createIndex(Admin admin) {
@@ -30,9 +24,5 @@ public class DataBucket {
 
     public String getIndex() {
         return index;
-    }
-
-    public String getType() {
-        return type;
     }
 }

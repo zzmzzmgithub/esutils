@@ -1,7 +1,7 @@
 {
-    "template": "*audit*",
+    "index_patterns": "*audit*",
     "mappings": {
-        "auditevent": {
+        "defaulttype": {
             "dynamic": false,
             "date_detection": false,
             "properties": {

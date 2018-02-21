@@ -58,20 +58,18 @@ public abstract class TestBase {
         return writer.toString();
     }
 
-    protected Map<String, Object> getMap(String index, String type, String id) {
+    protected Map<String, Object> getMap(String index, String id) {
         return client.prepareGet()
                 .setIndex(index)
-                .setType(type)
                 .setId(id)
                 .execute()
                 .actionGet()
                 .getSourceAsMap();
     }
 
-    protected String getString(String index, String type, String id) {
+    protected String getString(String index, String id) {
         return client.prepareGet()
                 .setIndex(index)
-                .setType(type)
                 .setId(id)
                 .execute()
                 .actionGet()
@@ -115,24 +113,24 @@ public abstract class TestBase {
         assertSame(new JSONObject(pojoToString(map1)), new JSONObject(pojoToString(map2)));
     }
 
-    public Search search(String index, String type) {
-        return esClient().search(new DataBucket(index, type));
+    public Search search(String index) {
+        return esClient().search(new DataBucket(index));
     }
 
-    public Indexer indexer(String index, String type) {
-        return esClient().indexer(new DataBucket(index, type));
+    public Indexer indexer(String index) {
+        return esClient().indexer(new DataBucket(index));
     }
 
     public ElasticSearchClient esClient() {
         return esClient;
     }
 
-    public Search searchTcp(String index, String type) {
-        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(new DataBucket(index, type));
+    public Search searchTcp(String index) {
+        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(new DataBucket(index));
     }
 
-    public Indexer indexerTcp(String index, String type) {
-        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).indexer(new DataBucket(index, type));
+    public Indexer indexerTcp(String index) {
+        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).indexer(new DataBucket(index));
     }
 
     public List<String> generateDocuments(int count, boolean addError) throws IOException {
