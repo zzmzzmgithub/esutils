@@ -15,6 +15,7 @@ public class IndexBatch implements AutoCloseable {
     private Json json;
     private List<Document> documents = new ArrayList<>();
     private int size;
+    private IndexListener indexListener;
 
     protected IndexBatch(Indexer indexer, Json json, int size) {
         this.indexer = indexer;
@@ -42,6 +43,21 @@ public class IndexBatch implements AutoCloseable {
 
     private void bulkIndex() {
         indexer.bulkIndex(documents);
+        if (indexListener != null) {
+            indexListener.documentsIndexed(documents);
+        }
         documents.clear();
+    }
+
+    public IndexListener getIndexListener() {
+        return indexListener;
+    }
+
+    public void setIndexListener(IndexListener indexListener) {
+        this.indexListener = indexListener;
+    }
+
+    public static interface IndexListener {
+        void documentsIndexed(List<Document> documents);
     }
 }
