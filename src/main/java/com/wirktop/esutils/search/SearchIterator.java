@@ -14,6 +14,7 @@ import java.util.Iterator;
 public class SearchIterator implements Iterator<SearchHit> {
 
     public static final int DEFAULT_PAGE_SIZE = 10;
+    public static final int MAX_RESULTS = 10000;
 
     private Search search;
     private QueryBuilder query;
@@ -69,6 +70,6 @@ public class SearchIterator implements Iterator<SearchHit> {
 
     @Override
     public boolean hasNext() {
-        return currentIndex < totalHitCount;
+        return currentIndex < totalHitCount && currentIndex + pageSize < MAX_RESULTS;
     }
 }
