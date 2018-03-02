@@ -34,6 +34,9 @@ try (IndexBatch batch = indexer.batch()) {
 </dependency>
 ```
 
+* In order to future-proof the library for ElasticSerch versions that will not allow types (https://www.elastic.co/guide/en/elasticsearch/reference/master/removal-of-types.html) 
+we are not enabling the passing of a type anymore, and internally we always assume `defaulttype` for all requests. Open to debate and PRs, obviously.
+  
 ## High level concepts
 The design revolves around an [`ElasticSearchClient`](https://wirktop.github.io/esutils/current/apidocs/com/wirktop/esutils/ElasticSearchClient.html) component
 which produces sub-components like [`Search`](https://wirktop.github.io/esutils/current/apidocs/com/wirktop/esutils/search/Search.html),
