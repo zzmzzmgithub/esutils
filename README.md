@@ -30,7 +30,7 @@ try (IndexBatch batch = indexer.batch()) {
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>0.9.7</version>
+  <version>1.0.2</version>
 </dependency>
 ```
 
@@ -42,10 +42,10 @@ which produces sub-components like [`Search`](https://wirktop.github.io/esutils/
 [`Admin`](https://wirktop.github.io/esutils/current/apidocs/com/wirktop/esutils/Admin.html).
 
 `Search` and `Indexer` instances are bound to a [`DataBucket`](https://wirktop.github.io/esutils/current/apidocs/com/wirktop/esutils/DataBucket.html) which is a "pointer" to
-an (index,type) tuple.
+an index.
 
-`DataBucket` can be extended for custom behaviours like prefixing/suffixing index or type names, etc. It is the easiest way to achieve dynamic names for the
-index (or type) at runtime, and can be useful for multi-tenancy, etc. Unit tests contain such customisation examples (check `DataBucket` subclasses in the project).
+`DataBucket` can be extended for custom behaviours like prefixing/suffixing index, etc. It is the easiest way to achieve dynamic names for the
+index at runtime, and can be useful for multi-tenancy, etc. Unit tests contain such customisation examples (check `DataBucket` subclasses in the project).
 
 A more elaborate customisation of `DataBucket` is [`AliasWrappedBucket`](https://github.com/wirktop/esutils/wiki/AliasWrappedBucket).
 

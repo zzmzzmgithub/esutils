@@ -125,7 +125,7 @@ public class Search {
     }
 
     public Stream<SearchHit> search(QueryBuilder query, int pageSize, SortBuilder sort) {
-        SearchIterator iterator = new SearchIterator(this, query, SearchIterator.DEFAULT_PAGE_SIZE, sort);
+        SearchIterator iterator = new SearchIterator(this, query, pageSize, sort);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
