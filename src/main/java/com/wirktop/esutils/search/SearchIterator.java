@@ -51,7 +51,7 @@ public class SearchIterator implements Iterator<SearchHit> {
         long arrayIndex = currentIndex % pageSize;
         SearchHit hit = currentResponse.getHits().getHits()[(int) arrayIndex];
         currentIndex++;
-        if (currentIndex % pageSize == 0) {
+        if (currentIndex % pageSize == 0 && currentIndex < MAX_RESULTS) {
             doRequest();
         }
         return hit;
@@ -70,6 +70,6 @@ public class SearchIterator implements Iterator<SearchHit> {
 
     @Override
     public boolean hasNext() {
-        return currentIndex < totalHitCount && currentIndex + pageSize < MAX_RESULTS;
+        return currentIndex < totalHitCount && currentIndex < MAX_RESULTS;
     }
 }

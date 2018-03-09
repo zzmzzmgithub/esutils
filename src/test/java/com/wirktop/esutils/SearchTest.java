@@ -6,6 +6,7 @@ import com.wirktop.esutils.index.IndexBatch;
 import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Scroll;
 import com.wirktop.esutils.search.Search;
+import com.wirktop.esutils.search.SearchIterator;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.json.JSONObject;
@@ -91,7 +92,7 @@ public class SearchTest extends TestBase {
         assertSame(new JSONObject(pojoToString(document)), new JSONObject(responseDoc.getSource()));
         Assert.assertTrue(responseDoc.getVersion() > 0);
     }
-    
+
     @Test
     public void testSearchPojo() throws Exception {
         String index = "test-search-pojo";
@@ -199,6 +200,38 @@ public class SearchTest extends TestBase {
         JSONObject r2 = new JSONObject(new String(out2.toByteArray(), StandardCharsets.UTF_8));
 
         Assert.assertEquals(100, r1.getJSONObject("hits").getInt("total") + r2.getJSONObject("hits").getInt("total"));
+    }
+
+    @Test
+    public void testStreamLimit() throws Exception {
+        int docCount = 12000;
+        String index = "test-stream-limit";
+        Search search = search(index);
+        Indexer indexer = indexer(index);
+        indexStructuredDocs(docCount, indexer);
+        waitForIndexedDocs(index, docCount);
+        int count[] = {0};
+        search.search(QueryBuilders.matchAllQuery())
+                .forEach(hit -> {
+                    count[0]++;
+                });
+        Assert.assertEquals(SearchIterator.MAX_RESULTS, count[0]);
+    }
+
+    @Test
+    public void testStreamLimit2() throws Exception {
+        int docCount = 4597;
+        String index = "test-stream-limit2";
+        Search search = search(index);
+        Indexer indexer = indexer(index);
+        indexStructuredDocs(docCount, indexer);
+        waitForIndexedDocs(index, docCount);
+        int count[] = {0};
+        search.search(QueryBuilders.matchAllQuery())
+                .forEach(hit -> {
+                    count[0]++;
+                });
+        Assert.assertEquals(docCount, count[0]);
     }
 
 

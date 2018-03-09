@@ -164,7 +164,7 @@ public abstract class TestBase {
         SearchResponse response = null;
         do {
             response = client().prepareSearch(index)
-                    .setSize(docCount)
+                    .setSize(0)
                     .setQuery(QueryBuilders.matchAllQuery())
                     .execute()
                     .actionGet();
