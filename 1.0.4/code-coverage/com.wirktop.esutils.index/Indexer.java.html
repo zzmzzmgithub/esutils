@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Indexer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ElasticSearch Java Utilities</a> &gt; <a href="index.source.html" class="el_package">com.wirktop.esutils.index</a> &gt; <span class="el_source">Indexer.java</span></div><h1>Indexer.java</h1><pre class="source lang-java linenums">package com.wirktop.esutils.index;
+
+import com.wirktop.esutils.*;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
+/**
+ * @author Cosmin Marginean
+ */
+public class Indexer {
+
+    private static final int DEFAULT_BATCH_SIZE = 100;
+    public static final String DEFAULTTYPE = &quot;defaulttype&quot;;
+
+    private final ElasticSearchClient esClient;
+    private final DataBucket bucket;
+
+<span class="fc" id="L30">    public Indexer(ElasticSearchClient esClient, DataBucket bucket) {</span>
+<span class="fc" id="L31">        this.esClient = esClient;</span>
+<span class="fc" id="L32">        this.bucket = bucket;</span>
+<span class="fc" id="L33">    }</span>
+
+    public String indexObject(Object doc) {
+<span class="fc" id="L36">        return indexObject(null, doc, false);</span>
+    }
+
+    public String indexObject(String id, Object doc) {
+<span class="fc" id="L40">        return indexObject(id, doc, false);</span>
+    }
+
+    public String indexObject(String id, Object doc, boolean refresh) {
+<span class="fc" id="L44">        return indexJson(id, json().toString(doc), refresh);</span>
+    }
+
+    public String indexJson(String jsonDocument) {
+<span class="fc" id="L48">        return indexJson(null, jsonDocument, false);</span>
+    }
+
+    public String indexJson(String id, String jsonDocument) {
+<span class="fc" id="L52">        return indexJson(id, jsonDocument, false);</span>
+    }
+
+    public String indexJson(String id, String jsonDocument, boolean refresh) {
+<span class="fc" id="L56">        return indexDocument(new Document(id, jsonDocument), refresh);</span>
+    }
+
+    public void updateScriptRetry(String id, String painlessScript, Map&lt;String, Object&gt; params, int retryCount) {
+<span class="nc" id="L60">        UpdateRequest request = updateRequest(id)</span>
+<span class="nc" id="L61">                .script(new Script(ScriptType.INLINE, &quot;painless&quot;, painlessScript, params));</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (retryCount &gt; 0) {</span>
+<span class="nc" id="L63">            request = request.retryOnConflict(retryCount);</span>
+        }
+<span class="nc" id="L65">        update(request);</span>
+<span class="nc" id="L66">    }</span>
+
+    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params) {
+<span class="fc" id="L69">        updateScript(id, painlessScript, params, 0L);</span>
+<span class="fc" id="L70">    }</span>
+
+    public void updateScript(String id, String painlessScript, Map&lt;String, Object&gt; params, long version) {
+<span class="fc" id="L73">        UpdateRequest request = updateRequest(id)</span>
+<span class="fc" id="L74">                .script(new Script(ScriptType.INLINE, &quot;painless&quot;, painlessScript, params));</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (version &gt; 0) {</span>
+<span class="fc" id="L76">            request = request.version(version);</span>
+        }
+<span class="fc" id="L78">        update(request);</span>
+<span class="fc" id="L79">    }</span>
+
+
+    public void updateDoc(String id, String docJsonStr, long version) {
+<span class="fc" id="L83">        UpdateRequest request = updateRequest(id)</span>
+<span class="fc" id="L84">                .doc(docJsonStr, XContentType.JSON);</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (version &gt; 0) {</span>
+<span class="fc" id="L86">            request = request.version(version);</span>
+        }
+<span class="fc" id="L88">        update(request);</span>
+<span class="fc" id="L89">    }</span>
+
+    public void updateField(String id, String field, Object value) {
+<span class="fc" id="L92">        updateField(id, field, value, 0);</span>
+<span class="fc" id="L93">    }</span>
+
+    public void updateField(String id, String field, Object value, long version) {
+<span class="fc" id="L96">        UpdateRequest request = updateRequest(id)</span>
+<span class="fc" id="L97">                .doc(Collections.singletonMap(field, value));</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (version &gt; 0) {</span>
+<span class="fc" id="L99">            request = request.version(version);</span>
+        }
+<span class="fc" id="L101">        update(request);</span>
+<span class="fc" id="L102">    }</span>
+
+    public UpdateRequest updateRequest(String id) {
+<span class="fc" id="L105">        return new UpdateRequest(bucket.getIndex(), DEFAULTTYPE, id);</span>
+    }
+
+    public void update(UpdateRequest request) {
+<span class="fc" id="L109">        esClient.getClient().update(request).actionGet();</span>
+<span class="fc" id="L110">    }</span>
+
+    public void delete(String id) {
+<span class="fc" id="L113">        delete(id, false);</span>
+<span class="fc" id="L114">    }</span>
+
+    public void delete(String id, boolean refresh) {
+<span class="fc" id="L117">        DeleteRequestBuilder request = esClient.getClient().prepareDelete(bucket.getIndex(), DEFAULTTYPE, id);</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (refresh) {</span>
+<span class="fc" id="L119">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+        }
+<span class="fc" id="L121">        request.execute().actionGet();</span>
+<span class="fc" id="L122">    }</span>
+
+    public String indexDocument(Document document) {
+<span class="fc" id="L125">        return indexDocument(document, false);</span>
+    }
+
+    public String indexDocument(Document document, boolean waitRefresh) {
+<span class="fc" id="L129">        IndexRequestBuilder request = indexRequest(document.getId(), waitRefresh);</span>
+<span class="fc" id="L130">        request = request.setSource(document.getSource(), XContentType.JSON);</span>
+<span class="fc" id="L131">        IndexResponse response = request.execute().actionGet();</span>
+<span class="fc" id="L132">        return response.getId();</span>
+    }
+
+    public void bulkIndex(Collection&lt;Document&gt; documents) {
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L137">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            for (Document document : documents) {</span>
+<span class="fc" id="L139">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">                if (document.getId() != null) {</span>
+<span class="fc" id="L141">                    indexRequest.setId(document.getId());</span>
+                }
+<span class="fc" id="L143">                indexRequest = indexRequest.setSource(document.getSource(), XContentType.JSON);</span>
+<span class="fc" id="L144">                request.add(indexRequest);</span>
+<span class="fc" id="L145">            }</span>
+<span class="fc" id="L146">            doBulkIndex(request);</span>
+        }
+<span class="fc" id="L148">    }</span>
+
+    private IndexRequestBuilder indexRequest(String id, boolean waitRefresh) {
+<span class="fc" id="L151">        IndexRequestBuilder request = prepareIndex();</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (id != null) {</span>
+<span class="fc" id="L153">            request = request.setId(id);</span>
+        }
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (waitRefresh) {</span>
+<span class="fc" id="L156">            request = request.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);</span>
+        }
+<span class="fc" id="L158">        return request;</span>
+    }
+
+    public void bulkIndexJsonStr(Collection&lt;String&gt; documents) {
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">        if (documents != null) {</span>
+<span class="fc" id="L163">            BulkRequestBuilder request = esClient.getClient().prepareBulk();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            for (String document : documents) {</span>
+<span class="fc" id="L165">                IndexRequestBuilder indexRequest = prepareIndex();</span>
+<span class="fc" id="L166">                indexRequest = indexRequest.setSource(document, XContentType.JSON);</span>
+<span class="fc" id="L167">                request.add(indexRequest);</span>
+<span class="fc" id="L168">            }</span>
+<span class="fc" id="L169">            doBulkIndex(request);</span>
+        }
+<span class="fc" id="L171">    }</span>
+
+    public IndexBatch batch() {
+<span class="fc" id="L174">        return batch(DEFAULT_BATCH_SIZE);</span>
+    }
+
+    public IndexBatch batch(int size) {
+<span class="fc" id="L178">        return new IndexBatch(this, json(), size);</span>
+    }
+
+    private void doBulkIndex(BulkRequestBuilder request) {
+<span class="fc" id="L182">        BulkResponse response = request.execute().actionGet();</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        if (response.hasFailures()) {</span>
+<span class="nc" id="L184">            throw new SearchException(&quot;Could not index all documents. Error message is: &quot; + response.buildFailureMessage());</span>
+        }
+<span class="fc" id="L186">    }</span>
+
+    private IndexRequestBuilder prepareIndex() {
+<span class="fc" id="L189">        return esClient.getClient().prepareIndex(bucket.getIndex(), DEFAULTTYPE);</span>
+    }
+
+    private Json json() {
+<span class="fc" id="L193">        return esClient.json();</span>
+    }
+
+    public DataBucket bucket() {
+<span class="fc" id="L197">        return bucket;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
