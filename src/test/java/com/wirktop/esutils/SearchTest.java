@@ -7,6 +7,8 @@ import com.wirktop.esutils.index.Indexer;
 import com.wirktop.esutils.search.Scroll;
 import com.wirktop.esutils.search.Search;
 import com.wirktop.esutils.search.SearchIterator;
+import org.elasticsearch.action.explain.ExplainResponse;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.json.JSONObject;
@@ -251,6 +253,33 @@ public class SearchTest extends TestBase {
                 .forEach((people::add));
 
         Assert.assertEquals(100, people.size());
+    }
+
+    @Test
+    public void testExplain() throws Exception {
+        esClient().admin().createTemplate("bbb", getClass().getResourceAsStream("/templates/template-index.json"));
+        String index = "test-explain";
+        Search search = search(index);
+        Indexer indexer = indexer(index);
+        TestPojo document = docAsPojo("pojo1.json", TestPojo.class);
+        String id = indexer.indexObject(document);
+        MatchQueryBuilder query = QueryBuilders.matchQuery("name", "smith");
+        waitForIndexedDocs(index, 1);
+        List<SearchHit> results = search.search(query).collect(Collectors.toList());
+        Assert.assertEquals(1, results.size());
+        ExplainResponse response = search.explain(id, query);
+        Assert.assertEquals("0.2876821 = weight(name:smith in 0) [PerFieldSimilarity], result of:\n" +
+                "  0.2876821 = score(doc=0,freq=1.0 = termFreq=1.0\n" +
+                "), product of:\n" +
+                "    0.2876821 = idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:\n" +
+                "      1.0 = docFreq\n" +
+                "      1.0 = docCount\n" +
+                "    1.0 = tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:\n" +
+                "      1.0 = termFreq=1.0\n" +
+                "      1.2 = parameter k1\n" +
+                "      0.75 = parameter b\n" +
+                "      2.0 = avgFieldLength\n" +
+                "      2.0 = fieldLength", response.getExplanation().toString().trim());
     }
 
     @Test
