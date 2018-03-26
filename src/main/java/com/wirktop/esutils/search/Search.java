@@ -4,6 +4,7 @@ import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.Document;
 import com.wirktop.esutils.ElasticSearchClient;
 import com.wirktop.esutils.index.Indexer;
+import org.elasticsearch.action.explain.ExplainResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -155,5 +156,12 @@ public class Search {
 
     public boolean indexExists() {
         return esClient.admin().indexExists(bucket.getIndex());
+    }
+
+    public ExplainResponse explain(String id, QueryBuilder query) {
+        return esClient.getClient()
+                .prepareExplain(bucket.getIndex(), Indexer.DEFAULTTYPE, id)
+                .setQuery(query)
+                .get();
     }
 }
