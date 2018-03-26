@@ -61,6 +61,7 @@ public class ScrollIterator implements Iterator<SearchHit> {
                     .setScroll(DEFAULT_KEEPALIVE)
                     .execute()
                     .actionGet();
+            totalHitCount = currentResponse.getHits().getTotalHits();
         }
         return hit;
     }

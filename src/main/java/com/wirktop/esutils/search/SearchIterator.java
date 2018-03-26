@@ -37,7 +37,6 @@ public class SearchIterator implements Iterator<SearchHit> {
 
         currentIndex = 0;
         doRequest();
-        totalHitCount = currentResponse.getHits().getTotalHits();
         if (totalHitCount > 0) {
             currentIndex = 0;
         }
@@ -66,6 +65,7 @@ public class SearchIterator implements Iterator<SearchHit> {
             request.addSort(sort);
         }
         currentResponse = request.execute().actionGet();
+        totalHitCount = currentResponse.getHits().getTotalHits();
     }
 
     @Override
