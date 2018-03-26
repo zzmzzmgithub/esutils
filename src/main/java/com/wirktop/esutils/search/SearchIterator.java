@@ -70,6 +70,6 @@ public class SearchIterator implements Iterator<SearchHit> {
 
     @Override
     public boolean hasNext() {
-        return currentIndex < totalHitCount && currentIndex < MAX_RESULTS;
+        return totalHitCount > 0 && currentIndex < totalHitCount && currentIndex < MAX_RESULTS;
     }
 }

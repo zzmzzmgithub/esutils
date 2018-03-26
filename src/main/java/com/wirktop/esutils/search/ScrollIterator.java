@@ -45,7 +45,7 @@ public class ScrollIterator implements Iterator<SearchHit> {
 
     @Override
     public boolean hasNext() {
-        return currentIndex < totalHitCount;
+        return totalHitCount > 0 && currentIndex < totalHitCount;
     }
 
     @Override
