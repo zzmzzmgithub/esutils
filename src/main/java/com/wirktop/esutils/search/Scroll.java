@@ -16,8 +16,8 @@ import java.util.stream.StreamSupport;
  */
 public class Scroll {
 
-    protected static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(10);
-    protected static final int DEFAULT_PAGE_SIZE = 200;
+    public static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(10);
+    public static final int DEFAULT_PAGE_SIZE = 100;
 
     private final ElasticSearchClient esClient;
     private final DataBucket bucket;
