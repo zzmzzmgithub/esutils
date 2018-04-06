@@ -33,7 +33,7 @@ we are not enabling the passing of a type anymore, and internally we always assu
 <dependency>
   <groupId>com.wirktop</groupId>
   <artifactId>esutils</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
 </dependency>
 ```
   
