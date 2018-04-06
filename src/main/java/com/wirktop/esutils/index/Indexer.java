@@ -4,12 +4,14 @@ import com.wirktop.esutils.*;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
-import org.elasticsearch.action.explain.ExplainRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
@@ -108,6 +110,14 @@ public class Indexer {
 
     public void update(UpdateRequest request) {
         esClient.getClient().update(request).actionGet();
+    }
+
+    public long delete(QueryBuilder filter) {
+        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(esClient.getClient())
+                .filter(filter)
+                .source(bucket.getIndex())
+                .get();
+        return response.getDeleted();
     }
 
     public void delete(String id) {
