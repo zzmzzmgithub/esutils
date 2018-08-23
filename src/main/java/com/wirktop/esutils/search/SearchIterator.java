@@ -20,20 +20,22 @@ public class SearchIterator implements Iterator<SearchHit> {
     private QueryBuilder query;
     private int pageSize;
     private SortBuilder sort;
+    private boolean explain;
 
     private SearchResponse currentResponse;
     private int currentIndex;
     private long totalHitCount;
 
-    protected SearchIterator(Search search, QueryBuilder query, int pageSize) {
-        this(search, query, pageSize, null);
+    protected SearchIterator(Search search, QueryBuilder query, int pageSize, boolean explain) {
+        this(search, query, pageSize, null, explain);
     }
 
-    protected SearchIterator(Search search, QueryBuilder query, int pageSize, SortBuilder sort) {
+    protected SearchIterator(Search search, QueryBuilder query, int pageSize, SortBuilder sort, boolean explain) {
         this.search = search;
         this.query = query;
         this.pageSize = pageSize;
         this.sort = sort;
+        this.explain = explain;
 
         currentIndex = 0;
         doRequest();
@@ -61,6 +63,7 @@ public class SearchIterator implements Iterator<SearchHit> {
         request.setQuery(query);
         request.setFrom(currentIndex);
         request.setSize(pageSize);
+        request.setExplain(explain);
         if (sort != null) {
             request.addSort(sort);
         }

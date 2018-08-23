@@ -114,19 +114,23 @@ public class Search {
     }
 
     public Stream<SearchHit> search(QueryBuilder query) {
-        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, null);
+        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, null, false);
+    }
+
+    public Stream<SearchHit> search(QueryBuilder query, boolean explain) {
+        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, null, explain);
     }
 
     public Stream<SearchHit> search(QueryBuilder query, int pageSize) {
-        return search(query, pageSize, null);
+        return search(query, pageSize, null, false);
     }
 
     public Stream<SearchHit> search(QueryBuilder query, SortBuilder sort) {
-        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, sort);
+        return search(query, SearchIterator.DEFAULT_PAGE_SIZE, sort, false);
     }
 
-    public Stream<SearchHit> search(QueryBuilder query, int pageSize, SortBuilder sort) {
-        SearchIterator iterator = new SearchIterator(this, query, pageSize, sort);
+    public Stream<SearchHit> search(QueryBuilder query, int pageSize, SortBuilder sort, boolean explain) {
+        SearchIterator iterator = new SearchIterator(this, query, pageSize, sort, explain);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
