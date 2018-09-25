@@ -138,6 +138,9 @@ public class Indexer {
 
     public String indexDocument(Document document, boolean waitRefresh) {
         IndexRequestBuilder request = indexRequest(document.getId(), waitRefresh);
+        if (document.getVersion() > 0) {
+            request.setVersion(document.getVersion());
+        }
         request = request.setSource(document.getSource(), XContentType.JSON);
         IndexResponse response = request.execute().actionGet();
         return response.getId();
