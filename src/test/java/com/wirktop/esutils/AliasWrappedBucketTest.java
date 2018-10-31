@@ -16,7 +16,7 @@ public class AliasWrappedBucketTest extends TestBase {
 
     @Test
     public void testAliasWrapped() throws Exception {
-        ElasticSearchClient client = esClient();
+        ElasticClient client = esClient();
         String indexBaseName = "aliaswrapped";
         AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName);
         Admin admin = client.admin();
@@ -52,7 +52,7 @@ public class AliasWrappedBucketTest extends TestBase {
 
     @Test
     public void testRefresh() throws Exception {
-        ElasticSearchClient client = esClient();
+        ElasticClient client = esClient();
         String indexBaseName = "aliaswrappedrefresh";
         AliasWrappedBucket bucket = new AliasWrappedBucket(indexBaseName);
         Admin admin = client.admin();
@@ -69,7 +69,7 @@ public class AliasWrappedBucketTest extends TestBase {
 
     @Test
     public void testCustom() throws Exception {
-        ElasticSearchClient client = esClient();
+        ElasticClient client = esClient();
         String indexBaseName = "aliaswrappedcustom";
         String prefixyz = "prefixyz";
         String fullPrefix = prefixyz + "---";

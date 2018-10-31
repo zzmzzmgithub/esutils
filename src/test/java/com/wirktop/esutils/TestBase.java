@@ -33,7 +33,7 @@ public abstract class TestBase {
     private static final String CLUSTER = "wirktop-esutils-test";
     protected static ObjectMapper objectMapper = new ObjectMapper();
     private static TransportClient client;
-    private static ElasticSearchClient esClient;
+    private static ElasticClient esClient;
 
     @BeforeClass
     public static void bootstrap() throws Exception {
@@ -41,7 +41,7 @@ public abstract class TestBase {
         client = new PreBuiltTransportClient(settings);
         InetAddress address = InetAddress.getByName("localhost");
         client.addTransportAddress(new TransportAddress(address, 9300));
-        esClient = new ElasticSearchClient(client());
+        esClient = new ElasticClient(client());
     }
 
     @AfterClass
@@ -121,16 +121,16 @@ public abstract class TestBase {
         return esClient().indexer(new DataBucket(index));
     }
 
-    public ElasticSearchClient esClient() {
+    public ElasticClient esClient() {
         return esClient;
     }
 
     public Search searchTcp(String index) {
-        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).search(new DataBucket(index));
+        return new ElasticClient(CLUSTER, Arrays.asList("localhost:9300")).search(new DataBucket(index));
     }
 
     public Indexer indexerTcp(String index) {
-        return new ElasticSearchClient(Arrays.asList("localhost:9300"), CLUSTER).indexer(new DataBucket(index));
+        return new ElasticClient(CLUSTER, Arrays.asList("localhost:9300")).indexer(new DataBucket(index));
     }
 
     public List<String> generateDocuments(int count, boolean addError) throws IOException {

@@ -28,13 +28,13 @@ public class SearchTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoBucket() throws Exception {
-        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+        new ElasticClient("x", Arrays.asList("localhost:9300"))
                 .search(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoIndex() throws Exception {
-        new ElasticSearchClient(Arrays.asList("localhost:9300"), "x")
+        new ElasticClient("x", Arrays.asList("localhost:9300"))
                 .search(new DataBucket(null));
     }
 
@@ -304,7 +304,7 @@ public class SearchTest extends TestBase {
 
     @Test
     public void testScrollFullIndex() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         List<Document> docs1 = generateDocuments(100, false)
                 .stream()
                 .map((docStr) -> new Document(UUID.randomUUID().toString(), docStr))

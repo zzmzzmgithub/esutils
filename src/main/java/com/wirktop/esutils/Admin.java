@@ -45,9 +45,9 @@ public class Admin {
     public static final int DATA_COPY_BATCH_SIZE = 100;
     private static final Logger log = LoggerFactory.getLogger(Admin.class);
     private static final String ANYTYPE = "ANYTYPE";
-    private ElasticSearchClient esClient;
+    private ElasticClient esClient;
 
-    public Admin(ElasticSearchClient esClient) {
+    public Admin(ElasticClient esClient) {
         this.esClient = esClient;
     }
 

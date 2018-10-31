@@ -27,10 +27,10 @@ public class Indexer {
     private static final int DEFAULT_BATCH_SIZE = 100;
     public static final String DEFAULTTYPE = "defaulttype";
 
-    private final ElasticSearchClient esClient;
+    private final ElasticClient esClient;
     private final DataBucket bucket;
 
-    public Indexer(ElasticSearchClient esClient, DataBucket bucket) {
+    public Indexer(ElasticClient esClient, DataBucket bucket) {
         this.esClient = esClient;
         this.bucket = bucket;
     }

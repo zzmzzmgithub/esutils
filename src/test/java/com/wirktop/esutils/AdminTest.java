@@ -34,7 +34,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateTemplate() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         String template = "mytemplate";
         client.admin().createTemplate(template, getClass().getResourceAsStream("/templates/template1.json"));
         GetIndexTemplatesResponse response = client().admin().indices().getTemplates(new GetIndexTemplatesRequest(template)).actionGet();
@@ -46,7 +46,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void tesCreateTemplateStr() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         String template = "mytemplate2";
         client.admin().createTemplate(template, IOUtils.toString(getClass().getResourceAsStream("/templates/template2.json"), StandardCharsets.UTF_8));
         GetIndexTemplatesResponse response = client().admin().indices().getTemplates(new GetIndexTemplatesRequest(template)).actionGet();
@@ -58,7 +58,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateIndex() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "createindextest";
         Assert.assertFalse(admin.indexExists(index));
@@ -71,7 +71,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateIndexBucket() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "createindextest-bucket";
         Assert.assertFalse(admin.indexExists(index));
@@ -84,7 +84,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateIndexDefaultShards() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "createindextest-default-shards";
         Assert.assertFalse(admin.indexExists(index));
@@ -97,7 +97,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateIndexExists() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "createindextest-exists";
         Assert.assertFalse(admin.indexExists(index));
@@ -112,7 +112,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testRemoveIndex() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "test-remove-index";
         admin.createIndex(index);
@@ -123,7 +123,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCreateAliasWithFilter() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         esClient().admin().createTemplate("index", getClass().getResourceAsStream("/templates/template-index.json"));
         String index = "testcreatealiaswithfilter";
@@ -144,7 +144,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testRemoveAlias() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String alias = "aliasnameremovealias";
         String index = "indexnamealiasnameremovealias";
@@ -160,7 +160,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testGetShards() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
         String index = "indexgetshards";
         admin.createIndex(index, 17);
@@ -169,7 +169,7 @@ public class AdminTest extends TestBase {
 
     @Test
     public void testCopyIndex() throws Exception {
-        ElasticSearchClient client = new ElasticSearchClient(client());
+        ElasticClient client = new ElasticClient(client());
         Admin admin = client.admin();
 
         int count = 319;

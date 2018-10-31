@@ -1,7 +1,7 @@
 package com.wirktop.esutils.search;
 
 import com.wirktop.esutils.DataBucket;
-import com.wirktop.esutils.ElasticSearchClient;
+import com.wirktop.esutils.ElasticClient;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -19,10 +19,10 @@ public class Scroll {
     public static final TimeValue DEFAULT_KEEPALIVE = TimeValue.timeValueMinutes(10);
     public static final int DEFAULT_PAGE_SIZE = 100;
 
-    private final ElasticSearchClient esClient;
+    private final ElasticClient esClient;
     private final DataBucket bucket;
 
-    public Scroll(ElasticSearchClient esClient, DataBucket bucket) {
+    public Scroll(ElasticClient esClient, DataBucket bucket) {
         if (esClient == null) {
             throw new IllegalArgumentException("client argument cannot be null");
         }
@@ -33,11 +33,11 @@ public class Scroll {
         this.bucket = bucket;
     }
 
-    public static Stream<SearchHit> scrollIndex(ElasticSearchClient esClient, String index) {
+    public static Stream<SearchHit> scrollIndex(ElasticClient esClient, String index) {
         return scrollIndex(esClient, index, SearchIterator.DEFAULT_PAGE_SIZE);
     }
 
-    public static Stream<SearchHit> scrollIndex(ElasticSearchClient esClient, String index, int pageSize) {
+    public static Stream<SearchHit> scrollIndex(ElasticClient esClient, String index, int pageSize) {
         SearchRequestBuilder request = esClient.getClient().prepareSearch(index);
         ScrollIterator iterator = new ScrollIterator(esClient, request, null, true, pageSize, DEFAULT_KEEPALIVE);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);

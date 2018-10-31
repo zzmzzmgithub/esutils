@@ -1,6 +1,6 @@
 package com.wirktop.esutils.search;
 
-import com.wirktop.esutils.ElasticSearchClient;
+import com.wirktop.esutils.ElasticClient;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
@@ -15,7 +15,7 @@ import java.util.Iterator;
 public class ScrollIterator implements Iterator<SearchHit> {
 
 
-    private ElasticSearchClient esClient;
+    private ElasticClient esClient;
     private String scrollId;
     private SearchResponse currentResponse;
     private long currentIndex;
@@ -23,7 +23,7 @@ public class ScrollIterator implements Iterator<SearchHit> {
     private int pageSize;
     private TimeValue keepAlive;
 
-    public ScrollIterator(ElasticSearchClient esClient, SearchRequestBuilder request, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {
+    public ScrollIterator(ElasticClient esClient, SearchRequestBuilder request, QueryBuilder query, boolean fetchSource, int pageSize, TimeValue keepAlive) {
         this.esClient = esClient;
         this.pageSize = pageSize;
         this.keepAlive = keepAlive;

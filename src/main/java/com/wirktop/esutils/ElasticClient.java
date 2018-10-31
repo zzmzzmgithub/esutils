@@ -14,28 +14,43 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Cosmin Marginean
  */
-public class ElasticSearchClient {
+public class ElasticClient {
 
-    private static final Logger log = LoggerFactory.getLogger(ElasticSearchClient.class);
+    private static final Logger log = LoggerFactory.getLogger(ElasticClient.class);
 
     private Client client;
     private Admin admin;
     private Json json = new Json(new ObjectMapper());
 
-    /**
-     * @param nodes       A collection of hostname:port elements
-     * @param clusterName Name of ElasticSearch cluster
-     */
-    public ElasticSearchClient(Collection<String> nodes, String clusterName) {
-        this(transportClient(nodes, clusterName));
+    public ElasticClient(String clusterName, String commaSeparatedNodes) {
+        this(transportClient(clusterName, splitNodes(commaSeparatedNodes)));
     }
 
-    public ElasticSearchClient(Client client) {
+    /**
+     * @param clusterName Name of ElasticSearch cluster
+     * @param nodes       A collection of hostname:port elements
+     */
+    public ElasticClient(String clusterName, Collection<String> nodes) {
+        this(transportClient(clusterName, nodes));
+    }
+
+    private static List<String> splitNodes(String commaSeparatedNodes) {
+        String[] nodesArray = commaSeparatedNodes.split(",");
+        List<String> nodes = new ArrayList<>();
+        for (String node : nodesArray) {
+            nodes.add(node.trim());
+        }
+        return nodes;
+    }
+
+    public ElasticClient(Client client) {
         if (client == null) {
             throw new IllegalArgumentException("client argument cannot be null");
         }
@@ -44,7 +59,7 @@ public class ElasticSearchClient {
         admin = new Admin(this);
     }
 
-    private static Client transportClient(Collection<String> nodes, String clusterName) {
+    private static Client transportClient(String clusterName, Collection<String> nodes) {
         if (clusterName == null) {
             throw new IllegalArgumentException("clusterName argument cannot be null");
         }

@@ -2,7 +2,7 @@ package com.wirktop.esutils.search;
 
 import com.wirktop.esutils.DataBucket;
 import com.wirktop.esutils.Document;
-import com.wirktop.esutils.ElasticSearchClient;
+import com.wirktop.esutils.ElasticClient;
 import com.wirktop.esutils.index.Indexer;
 import org.elasticsearch.action.explain.ExplainResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
@@ -28,11 +28,11 @@ public class Search {
 
     public static final Function<SearchHit, Document> HIT_TO_DOC = hit -> new Document(hit.getId(), hit.getVersion(), hit.getSourceAsString());
 
-    private final ElasticSearchClient esClient;
+    private final ElasticClient esClient;
     private final DataBucket bucket;
     private final Scroll scroll;
 
-    public Search(ElasticSearchClient esClient, DataBucket bucket) {
+    public Search(ElasticClient esClient, DataBucket bucket) {
         if (esClient == null) {
             throw new IllegalArgumentException("client argument cannot be null");
         }
@@ -146,7 +146,7 @@ public class Search {
         return bucket;
     }
 
-    public ElasticSearchClient esClient() {
+    public ElasticClient esClient() {
         return esClient;
     }
 

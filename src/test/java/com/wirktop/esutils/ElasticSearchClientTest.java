@@ -12,21 +12,21 @@ public class ElasticSearchClientTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidNodes() throws Exception {
-        new ElasticSearchClient(Arrays.asList("aaaa2229300"), "x");
+        new ElasticClient("x", Arrays.asList("aaaa2229300"));
     }
 
     @Test(expected = SearchException.class)
     public void testInvalidHost() throws Exception {
-        new ElasticSearchClient(Arrays.asList("blowup:9300"), "x");
+        new ElasticClient("x", Arrays.asList("blowup:9300"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoCluster() throws Exception {
-        new ElasticSearchClient(Arrays.asList("blowup:9300"), null);
+        new ElasticClient(null, Arrays.asList("blowup:9300"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoClient() throws Exception {
-        new ElasticSearchClient(null);
+        new ElasticClient(null);
     }
 }
